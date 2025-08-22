@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infestation Multiplayer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<div class="hud">
+
+  <button id="loginBtn">Login</button>
+
+  <div class="link-box">
+    <input type="text" id="linkInput" placeholder="Adicione um link">
+    <button id="addLinkBtn">+</button>
+  </div>
+
+  <div class="links-container" id="linksContainer"></div>
+</div>
+
+<div id="profileBallContainer"></div>
+
+<div id="loginModal" class="modal hidden">
+  <div class="modal-content">
+    <h2>Login / Registro</h2>
+    <input type="text" id="username" placeholder="Usuário">
+    <input type="password" id="password" placeholder="Senha">
+    <div class="modal-buttons">
+      <button id="registerBtn">Criar Conta</button>
+      <button id="loginSubmitBtn">Entrar</button>
+      <button id="closeModalBtn">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div id="genericModal" class="generic-modal hidden">
+  <div class="modal-box" id="modalContent"></div>
+</div>
+
+<div id="notificationsContainer" class="notifications"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="client.js"></script>
+</body>
+</html>
