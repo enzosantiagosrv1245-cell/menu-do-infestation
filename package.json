@@ -1,23 +1,14 @@
 {
   "name": "infestation-multiplayer",
   "version": "1.0.0",
-  "description": "Jogo multiplayer com login, links e HUD",
+  "description": "Jogo multiplayer com login, perfil, amigos e links",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node server.js"
   },
-  "keywords": [
-    "jogo",
-    "multiplayer",
-    "login",
-    "hud"
-  ],
-  "author": "Seu Nome",
-  "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
-    "fs-extra": "^11.3.1",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.2",
+    "fs-extra": "^11.1.1"
   }
 }

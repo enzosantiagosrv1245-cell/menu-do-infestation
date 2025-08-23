@@ -11,7 +11,6 @@
 <canvas id="gameCanvas" width="800" height="600"></canvas>
 
 <div class="hud">
-
   <button id="loginBtn">Login</button>
 
   <div class="link-box">
@@ -20,9 +19,21 @@
   </div>
 
   <div class="links-container" id="linksContainer"></div>
+
+  <div class="friends-container">
+    <h3>Amigos</h3>
+    <ul id="friendsList"></ul>
+    <h3>Pedidos de amizade</h3>
+    <ul id="requestsList"></ul>
+  </div>
 </div>
 
 <div id="profileBallContainer"></div>
+
+<div id="profileMenu" class="profile-menu hidden">
+  <button id="editProfileBtn">Editar Perfil</button>
+  <button id="logoutBtn">Sair</button>
+</div>
 
 <div id="loginModal" class="modal hidden">
   <div class="modal-content">
@@ -35,11 +46,6 @@
       <button id="closeModalBtn">Fechar</button>
     </div>
   </div>
-</div>
-
-<div id="profileMenu" class="profile-menu hidden">
-  <button id="editProfileBtn">Editar Perfil</button>
-  <button id="logoutBtn">Sair</button>
 </div>
 
 <div id="genericModal" class="generic-modal hidden">

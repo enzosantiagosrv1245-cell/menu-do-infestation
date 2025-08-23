@@ -91,6 +91,37 @@ canvas {
   box-shadow: 0 4px 10px rgba(52,152,219,0.7);
 }
 
+.friends-container {
+  margin-top: 15px;
+  max-width: 200px;
+}
+
+.friends-container h3 {
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.friends-container ul {
+  list-style: none;
+  padding-left: 5px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.friends-container li {
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background-color: #222;
+  margin-bottom: 2px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.friends-container li:hover {
+  background-color: #3498db;
+}
+
 .modal, .generic-modal {
   position: fixed;
   top: 0;
