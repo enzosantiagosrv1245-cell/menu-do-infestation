@@ -145,20 +145,37 @@ document.addEventListener("DOMContentLoaded", () => {
     const target = friendInput.value.trim();
     if (!target) return;
     if (target === currentUser) return showNotification("Não pode enviar para você mesmo", "red");
-    socket.emit("getAllUsers", null, usersList => {
-      if (!usersList.includes(target)) return showNotification("Jogador não existe", "red");
+    socket.emit("checkUserExists", target, exists => {
+      if (!exists) return showNotification("Jogador não existe", "red");
       socket.emit("friendRequest", { from: currentUser, to: target });
       showNotification("Pedido enviado!", "green");
     });
   });
 
-  socket.on("friendRequest", ({ from }) => {
-    showNotification(`Novo pedido de amizade de ${from}`, "blue");
-    updateFriendsUI();
+  socket.on("friendRequestNotification", ({ from, color }) => {
+    const notif = document.createElement("div");
+    notif.innerHTML = `Novo pedido de amizade de <span style="color:${color}">${from}</span>`;
+    const acceptBtn = document.createElement("button");
+    acceptBtn.textContent = "Aceitar";
+    acceptBtn.onclick = () => {
+      socket.emit("acceptRequest", { from, to: currentUser });
+      notif.remove();
+      updateFriendsUI();
+    };
+    const rejectBtn = document.createElement("button");
+    rejectBtn.textContent = "Recusar";
+    rejectBtn.onclick = () => {
+      socket.emit("rejectRequest", { from, to: currentUser });
+      notif.remove();
+    };
+    notif.appendChild(acceptBtn);
+    notif.appendChild(rejectBtn);
+    notificationsList.appendChild(notif);
   });
 
   socket.on("friendAccepted", ({ from }) => {
     showNotification(`Você e ${from} agora são amigos!`, "green");
+    if (!userProfile.friends.includes(from)) userProfile.friends.push(from);
     updateFriendsUI();
   });
 
@@ -229,7 +246,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function appendMessage(sender, msg) {
     const div = document.createElement("div");
     div.textContent = `${sender}: ${msg}`;
-    div.style.color = "#fff";
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
