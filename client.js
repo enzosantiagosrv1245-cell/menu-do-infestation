@@ -94,7 +94,40 @@ function createProfileUI(){
     ball.textContent=userProfile.username[0].toUpperCase();
     ball.style.backgroundColor=userProfile.color;
     container.appendChild(ball);
+
+    const menu=document.getElementById("profileMenu");
+    ball.addEventListener("click",()=>{
+        menu.classList.toggle("hidden");
+    });
 }
+
+// Perfil: logout e editar
+document.getElementById("logoutBtn").addEventListener("click",()=>{
+    currentUser=null;
+    userProfile=null;
+    document.getElementById("profileBallContainer").innerHTML="";
+    document.getElementById("profileMenu").classList.add("hidden");
+    loginBtn.style.display="block";
+    showNotification("Desconectado!","yellow");
+});
+
+// Receber respostas do server
+socket.on("registerSuccess",data=>{
+    showNotification("Conta criada!","green");
+});
+
+socket.on("registerError",msg=>showNotification(msg,"red"));
+
+socket.on("loginSuccess",data=>{
+    currentUser=data.username;
+    userProfile=data;
+    loginModal.classList.add("hidden");
+    loginBtn.style.display="none";
+    createProfileUI();
+    showNotification("Login realizado!","green");
+});
+
+socket.on("loginError",msg=>showNotification(msg,"red"));
 
 function showNotification(text,color="yellow"){
     const container=document.getElementById("notificationsContainer");
@@ -105,20 +138,4 @@ function showNotification(text,color="yellow"){
     container.appendChild(div);
     setTimeout(()=>div.remove(),4000);
 }
-
-// Receber respostas do server
-socket.on("registerSuccess",data=>{
-    showNotification("Conta criada!","green");
-});
-socket.on("registerError",msg=>showNotification(msg,"red"));
-socket.on("loginSuccess",data=>{
-    currentUser=data.username;
-    userProfile=data;
-    loginModal.classList.add("hidden");
-    loginBtn.style.display="none";
-    createProfileUI();
-    showNotification("Login realizado!","green");
-});
-socket.on("loginError",msg=>showNotification(msg,"red"));
-
 });
