@@ -8,33 +8,28 @@
 </head>
 <body>
 
-<canvas id="gameCanvas" width="800" height="600"></canvas>
+<canvas id="gameCanvas" width="1200" height="700"></canvas>
 
 <div class="hud">
   <button id="loginBtn">Login</button>
+  <button id="notificationsBtn">Notificações</button>
+  <button id="friendsBtn">Amigos</button>
+  <button id="settingsBtn">Configurações</button>
 
   <div class="link-box">
-    <input type="text" id="linkInput" placeholder="Adicione um link">
+    <input type="text" id="linkInput" placeholder="Adicionar link">
     <button id="addLinkBtn">+</button>
   </div>
 
   <div class="links-container" id="linksContainer"></div>
-
-  <div class="friends-container">
-    <h3>Amigos</h3>
-    <ul id="friendsList"></ul>
-    <h3>Pedidos de amizade</h3>
-    <ul id="requestsList"></ul>
-  </div>
 </div>
 
 <div id="profileBallContainer"></div>
-
 <div id="profileMenu" class="profile-menu hidden">
-  <button id="editProfileBtn">Editar Perfil</button>
   <button id="logoutBtn">Sair</button>
 </div>
 
+<!-- Modais -->
 <div id="loginModal" class="modal hidden">
   <div class="modal-content">
     <h2>Login / Registro</h2>
@@ -48,8 +43,48 @@
   </div>
 </div>
 
-<div id="genericModal" class="generic-modal hidden">
-  <div class="modal-box" id="modalContent"></div>
+<div id="friendsModal" class="generic-modal hidden">
+  <div class="modal-box" id="friendsContent">
+    <h2>Amigos</h2>
+    <ul id="friendsList"></ul>
+    <h2>Pedidos de amizade</h2>
+    <ul id="requestsList"></ul>
+    <input type="text" id="friendInput" placeholder="Nome do jogador">
+    <button id="sendFriendRequestBtn">Enviar Pedido</button>
+    <button onclick="document.getElementById('friendsModal').classList.add('hidden')">Fechar</button>
+  </div>
+</div>
+
+<div id="notificationsModal" class="generic-modal hidden">
+  <div class="modal-box" id="notificationsContent">
+    <h2>Notificações</h2>
+    <div id="notificationsList"></div>
+    <button onclick="document.getElementById('notificationsModal').classList.add('hidden')">Fechar</button>
+  </div>
+</div>
+
+<div id="settingsModal" class="generic-modal hidden">
+  <div class="modal-box" id="settingsContent">
+    <h2>Configurações</h2>
+    <input type="text" id="newName" placeholder="Novo nome (1 vez)">
+    <input type="password" id="currentPassword" placeholder="Senha atual">
+    <input type="password" id="newPassword" placeholder="Nova senha">
+    <input type="color" id="newColor">
+    <input type="file" id="newPhoto">
+    <button id="saveSettingsBtn">Salvar</button>
+    <button onclick="document.getElementById('settingsModal').classList.add('hidden')">Fechar</button>
+  </div>
+</div>
+
+<!-- Chat DM -->
+<div id="chatModal" class="generic-modal hidden">
+  <div class="modal-box" id="chatContent">
+    <h2>Chat com <span id="chatFriendName"></span></h2>
+    <div id="chatMessages" class="chat-messages"></div>
+    <input type="text" id="chatInput" placeholder="Digite sua mensagem">
+    <button id="sendChatBtn">Enviar</button>
+    <button onclick="document.getElementById('chatModal').classList.add('hidden')">Fechar</button>
+  </div>
 </div>
 
 <div id="notificationsContainer" class="notifications"></div>
