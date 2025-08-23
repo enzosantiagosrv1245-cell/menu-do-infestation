@@ -1,32 +1,26 @@
 document.addEventListener("DOMContentLoaded", () => {
-
-  // --- Canvas animado ---
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
-  let hue = 0;
+
+  // --- Canvas animado ---
   function drawCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, `hsl(${hue},60%,15%)`);
-    gradient.addColorStop(1, `hsl(${(hue+180)%360},60%,25%)`);
+    const time = Date.now() * 0.0002;
+    gradient.addColorStop(0, `hsl(${(time*360)%360},50%,10%)`);
+    gradient.addColorStop(1, `hsl(${(time*360+180)%360},50%,20%)`);
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    hue += 0.3;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
     requestAnimationFrame(drawCanvas);
   }
   drawCanvas();
 
-  // --- Socket.IO ---
-  const SERVER_URL = "https://menu-do-infestation.onrender.com";
-  const socket = io(SERVER_URL);
+  const socket = io();
 
-  // --- Variáveis globais ---
   let currentUser = null;
   let userProfile = null;
-  let activeChatFriend = null;
-  let chatHistory = {}; // {friend: [{from, msg}]}
 
-  // --- Links ---
+  // --- HUD e links ---
   const linksContainer = document.getElementById("linksContainer");
   const addLinkBtn = document.getElementById("addLinkBtn");
   const linkInput = document.getElementById("linkInput");
@@ -66,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // --- Login/Registro ---
+  // --- Login / Registro ---
   const loginBtn = document.getElementById("loginBtn");
   const loginModal = document.getElementById("loginModal");
   const closeModalBtn = document.getElementById("closeModalBtn");
@@ -82,141 +76,127 @@ document.addEventListener("DOMContentLoaded", () => {
     const user = usernameInput.value.trim();
     const pass = passwordInput.value.trim();
     if (!user || !pass) return showNotification("Preencha todos os campos!", "red");
-    socket.emit("register", {username: user, password: pass});
+    socket.emit("register", { username: user, password: pass });
   });
 
   loginSubmitBtn.addEventListener("click", () => {
     const user = usernameInput.value.trim();
     const pass = passwordInput.value.trim();
     if (!user || !pass) return showNotification("Preencha todos os campos!", "red");
-    socket.emit("login", {username: user, password: pass});
+    socket.emit("login", { username: user, password: pass });
   });
 
   socket.on("registerSuccess", data => showNotification("Conta criada!", "green"));
   socket.on("registerError", msg => showNotification(msg, "red"));
-
   socket.on("loginSuccess", data => {
     currentUser = data.username;
     userProfile = data;
     loginModal.classList.add("hidden");
     loginBtn.style.display = "none";
     createProfileUI();
+    updateFriendsUI();
     showNotification("Login realizado!", "green");
   });
-
   socket.on("loginError", msg => showNotification(msg, "red"));
 
   // --- Perfil ---
-  const profileContainer = document.getElementById("profileBallContainer");
-  const profileMenu = document.getElementById("profileMenu");
-
   function createProfileUI() {
-    profileContainer.innerHTML = "";
+    const container = document.getElementById("profileBallContainer");
+    container.innerHTML = "";
     const ball = document.createElement("div");
     ball.className = "profile-ball";
     ball.textContent = userProfile.username[0].toUpperCase();
-    if (userProfile.photo) {
-      ball.style.backgroundImage = `url(${userProfile.photo})`;
-      ball.style.backgroundSize = "cover";
-      ball.textContent = "";
-    } else {
-      ball.style.backgroundColor = userProfile.color || "#3498db";
-    }
-    profileContainer.appendChild(ball);
-    ball.addEventListener("click", () => profileMenu.classList.toggle("hidden"));
+    ball.style.backgroundColor = userProfile.color;
+    container.appendChild(ball);
+
+    ball.onclick = () => {
+      document.getElementById("friendsModal").classList.remove("hidden");
+      updateFriendsUI();
+    };
   }
 
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    currentUser = null;
-    userProfile = null;
-    profileMenu.classList.add("hidden");
-    profileContainer.innerHTML = "";
-    loginBtn.style.display = "block";
-    showNotification("Logout realizado!", "yellow");
-  });
+  // --- Notificações ---
+  const notificationsBtn = document.getElementById("notificationsBtn");
+  const notificationsModal = document.getElementById("notificationsModal");
+  const notificationsList = document.getElementById("notificationsList");
+  notificationsBtn.addEventListener("click", () => notificationsModal.classList.remove("hidden"));
+
+  function showNotification(text, color = "yellow") {
+    const container = document.getElementById("notificationsContainer");
+    const div = document.createElement("div");
+    div.className = "notification";
+    div.style.backgroundColor = color;
+    div.textContent = text;
+    container.appendChild(div);
+    setTimeout(() => div.remove(), 4000);
+  }
 
   // --- Amigos ---
   const friendsBtn = document.getElementById("friendsBtn");
   const friendsModal = document.getElementById("friendsModal");
-  const friendsList = document.getElementById("friendsList");
-  const requestsList = document.getElementById("requestsList");
   const friendInput = document.getElementById("friendInput");
   const sendFriendRequestBtn = document.getElementById("sendFriendRequestBtn");
+  const friendsList = document.getElementById("friendsList");
+  const requestsList = document.getElementById("requestsList");
 
-  friendsBtn.addEventListener("click", () => {
-    if (!currentUser) return showNotification("Faça login primeiro!", "red");
-    friendsModal.classList.remove("hidden");
-    renderFriends();
-    renderRequests();
-  });
-
-  function renderFriends() {
-    friendsList.innerHTML = "";
-    if (!userProfile.friends) userProfile.friends = [];
-    userProfile.friends.forEach(f => {
-      const li = document.createElement("li");
-      li.textContent = f;
-      const dmBtn = document.createElement("button");
-      dmBtn.textContent = "Chat";
-      dmBtn.onclick = () => openChat(f);
-      li.appendChild(dmBtn);
-      friendsList.appendChild(li);
-    });
-  }
-
-  function renderRequests() {
-    requestsList.innerHTML = "";
-    if (!userProfile.requests) userProfile.requests = [];
-    userProfile.requests.forEach(req => {
-      const li = document.createElement("li");
-      li.textContent = req;
-      const acceptBtn = document.createElement("button");
-      acceptBtn.textContent = "Aceitar";
-      acceptBtn.onclick = () => {
-        socket.emit("acceptRequest", {from:req,to:currentUser});
-        userProfile.friends.push(req);
-        userProfile.requests = userProfile.requests.filter(r => r!==req);
-        renderFriends();
-        renderRequests();
-        showNotification(`Amizade aceita: ${req}`,"green");
-      };
-      const rejectBtn = document.createElement("button");
-      rejectBtn.textContent = "Recusar";
-      rejectBtn.onclick = () => {
-        socket.emit("rejectRequest", {from:req,to:currentUser});
-        userProfile.requests = userProfile.requests.filter(r => r!==req);
-        renderRequests();
-        showNotification(`Pedido recusado: ${req}`,"red");
-      };
-      li.appendChild(acceptBtn);
-      li.appendChild(rejectBtn);
-      requestsList.appendChild(li);
-    });
-  }
+  friendsBtn.addEventListener("click", () => friendsModal.classList.remove("hidden"));
 
   sendFriendRequestBtn.addEventListener("click", () => {
     const target = friendInput.value.trim();
-    if (!target) return showNotification("Digite o nome do jogador!","red");
-    if (target === currentUser) return showNotification("Não pode enviar para você mesmo!","red");
-    socket.emit("friendRequest", {from:currentUser,to:target});
-    friendInput.value = "";
-    showNotification(`Pedido enviado para ${target}`,"yellow");
+    if (!target) return;
+    if (target === currentUser) return showNotification("Não pode enviar para você mesmo", "red");
+    socket.emit("getAllUsers", null, usersList => {
+      if (!usersList.includes(target)) return showNotification("Jogador não existe", "red");
+      socket.emit("friendRequest", { from: currentUser, to: target });
+      showNotification("Pedido enviado!", "green");
+    });
   });
 
-  socket.on("friendRequest", ({from}) => {
-    if (!userProfile.requests.includes(from)) {
-      userProfile.requests.push(from);
-      showNotification(`Novo pedido de amizade: ${from}`,"blue");
-    }
+  socket.on("friendRequest", ({ from }) => {
+    showNotification(`Novo pedido de amizade de ${from}`, "blue");
+    updateFriendsUI();
   });
 
-  socket.on("friendAccepted", ({from}) => {
-    if (!userProfile.friends.includes(from)) {
-      userProfile.friends.push(from);
-      renderFriends();
-      showNotification(`${from} aceitou sua amizade!`,"green");
-    }
+  socket.on("friendAccepted", ({ from }) => {
+    showNotification(`Você e ${from} agora são amigos!`, "green");
+    updateFriendsUI();
   });
+
+  function updateFriendsUI() {
+    if (!userProfile) return;
+    friendsList.innerHTML = "";
+    requestsList.innerHTML = "";
+
+    userProfile.friends.forEach(f => {
+      const li = document.createElement("li");
+      li.textContent = f;
+      li.onclick = () => openChat(f);
+      friendsList.appendChild(li);
+    });
+
+    userProfile.requests.forEach(r => {
+      const li = document.createElement("li");
+      li.textContent = r;
+      const accept = document.createElement("button");
+      accept.textContent = "Aceitar";
+      accept.onclick = () => {
+        socket.emit("acceptRequest", { from: r, to: currentUser });
+        userProfile.friends.push(r);
+        userProfile.requests = userProfile.requests.filter(req => req !== r);
+        updateFriendsUI();
+      };
+      const reject = document.createElement("button");
+      reject.textContent = "Recusar";
+      reject.onclick = () => {
+        socket.emit("rejectRequest", { from: r, to: currentUser });
+        userProfile.requests = userProfile.requests.filter(req => req !== r);
+        updateFriendsUI();
+      };
+      li.appendChild(accept);
+      li.appendChild(reject);
+      requestsList.appendChild(li);
+    });
+  }
 
   // --- Chat DM ---
   const chatModal = document.getElementById("chatModal");
@@ -224,61 +204,96 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatMessages = document.getElementById("chatMessages");
   const chatInput = document.getElementById("chatInput");
   const sendChatBtn = document.getElementById("sendChatBtn");
+  let currentChat = null;
 
   function openChat(friend) {
-    activeChatFriend = friend;
-    chatFriendName.textContent = friend;
+    currentChat = friend;
+    chatFriendName.textContent = `Chat com ${friend}`;
+    chatMessages.innerHTML = "";
     chatModal.classList.remove("hidden");
-    renderChat();
   }
 
-  function renderChat() {
-    chatMessages.innerHTML = "";
-    const msgs = chatHistory[activeChatFriend] || [];
-    msgs.forEach(m => {
-      const div = document.createElement("div");
-      div.className = "msg";
-      div.innerHTML = `<span>${m.from}:</span> ${m.msg}`;
-      chatMessages.appendChild(div);
-    });
+  sendChatBtn.addEventListener("click", () => {
+    const msg = chatInput.value.trim();
+    if (!msg || !currentChat) return;
+    socket.emit("dm", { to: currentChat, msg });
+    appendMessage(currentUser, msg);
+    chatInput.value = "";
+  });
+
+  socket.on("dm", ({ from, msg }) => {
+    if (from === currentChat) appendMessage(from, msg);
+    showNotification(`Mensagem de ${from}`, "blue");
+  });
+
+  function appendMessage(sender, msg) {
+    const div = document.createElement("div");
+    div.textContent = `${sender}: ${msg}`;
+    div.style.color = "#fff";
+    chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
-  sendChatBtn.addEventListener("click", sendMessage);
-  chatInput.addEventListener("keydown", e => { if(e.key==="Enter") sendMessage(); });
+  // --- Configurações ---
+  const settingsBtn = document.getElementById("settingsBtn");
+  const settingsModal = document.getElementById("settingsModal");
+  const changeNameInput = document.getElementById("changeNameInput");
+  const changeNameBtn = document.getElementById("changeNameBtn");
+  const changePassInput = document.getElementById("changePassInput");
+  const newPassInput = document.getElementById("newPassInput");
+  const changePassBtn = document.getElementById("changePassBtn");
+  const changeColorInput = document.getElementById("changeColorInput");
+  const changeColorBtn = document.getElementById("changeColorBtn");
+  const changePhotoInput = document.getElementById("changePhotoInput");
+  const changePhotoBtn = document.getElementById("changePhotoBtn");
 
-  function sendMessage() {
-    const msg = chatInput.value.trim();
-    if(!msg || !activeChatFriend) return;
-    if(!chatHistory[activeChatFriend]) chatHistory[activeChatFriend] = [];
-    chatHistory[activeChatFriend].push({from:currentUser,msg});
-    socket.emit("dm",{to:activeChatFriend,msg});
-    chatInput.value = "";
-    renderChat();
-  }
+  settingsBtn.addEventListener("click", () => settingsModal.classList.remove("hidden"));
 
-  socket.on("dm", ({from,msg})=>{
-    if(!chatHistory[from]) chatHistory[from] = [];
-    chatHistory[from].push({from,msg});
-    if(activeChatFriend===from) renderChat();
-    showNotification(`Nova mensagem de ${from}`,"blue");
+  changeNameBtn.addEventListener("click", () => {
+    const newName = changeNameInput.value.trim();
+    if (!newName) return showNotification("Digite um nome válido", "red");
+    if (userProfile.editedName) return showNotification("Você só pode mudar o nome 1 vez!", "red");
+    socket.emit("changeName", { oldName: currentUser, newName });
   });
 
-  // --- Notificações ---
-  const notificationsBtn = document.getElementById("notificationsBtn");
-  const notificationsModal = document.getElementById("notificationsModal");
-  const notificationsList = document.getElementById("notificationsList");
+  changePassBtn.addEventListener("click", () => {
+    const pass = changePassInput.value.trim();
+    const newPass = newPassInput.value.trim();
+    if (!pass || !newPass) return showNotification("Preencha todos os campos!", "red");
+    if (pass !== userProfile.password) return showNotification("Senha atual incorreta!", "red");
+    socket.emit("changePassword", { username: currentUser, newPass });
+  });
 
-  notificationsBtn.addEventListener("click",()=>notificationsModal.classList.remove("hidden"));
+  changeColorBtn.addEventListener("click", () => {
+    const color = changeColorInput.value;
+    userProfile.color = color;
+    createProfileUI();
+    socket.emit("changeColor", { username: currentUser, color });
+  });
 
-  function showNotification(text,color="yellow") {
-    const container = document.getElementById("notificationsContainer");
-    const div = document.createElement("div");
-    div.className = "notification";
-    div.style.backgroundColor = color;
-    div.textContent = text;
-    container.appendChild(div);
-    setTimeout(()=>div.remove(),4000);
-  }
+  changePhotoBtn.addEventListener("click", () => {
+    const file = changePhotoInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      userProfile.photo = reader.result;
+      createProfileUI();
+      socket.emit("changePhoto", { username: currentUser, photo: reader.result });
+    };
+    reader.readAsDataURL(file);
+  });
+
+  socket.on("nameChanged", (data) => {
+    currentUser = data.newName;
+    userProfile.username = data.newName;
+    userProfile.editedName = true;
+    createProfileUI();
+    showNotification("Nome alterado com sucesso!", "green");
+  });
+
+  socket.on("passwordChanged", () => {
+    userProfile.password = newPassInput.value;
+    showNotification("Senha alterada com sucesso!", "green");
+  });
 
 });

@@ -6,9 +6,7 @@ const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: "*" }
-});
+const io = new Server(server, { cors: { origin: "*" } });
 
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, "users.json");
@@ -16,14 +14,12 @@ const DATA_FILE = path.join(__dirname, "users.json");
 app.use(express.static(__dirname));
 app.use(express.json());
 
-// --- Carregar usuários ---
 let users = {};
 let sockets = {};
 let links = [];
 
 if (fs.existsSync(DATA_FILE)) users = fs.readJsonSync(DATA_FILE);
 
-// --- Helpers ---
 function saveUsers() {
   fs.writeJsonSync(DATA_FILE, users, { spaces: 2 });
 }
@@ -32,7 +28,6 @@ function generateID() {
   return "ID" + Math.floor(Math.random() * 1000000);
 }
 
-// --- Socket.IO ---
 io.on("connection", socket => {
   console.log("Novo jogador conectado:", socket.id);
 
@@ -63,13 +58,13 @@ io.on("connection", socket => {
     socket.emit("loginSuccess", users[username]);
   });
 
-  // Links compartilhados
+  // Links
   socket.on("newLink", url => {
     links.push(url);
     socket.broadcast.emit("broadcastLink", url);
   });
 
-  // Pedidos de amizade
+  // Amigos
   socket.on("friendRequest", ({ from, to }) => {
     if (users[to] && !users[to].requests.includes(from) && !users[to].friends.includes(from)) {
       users[to].requests.push(from);
@@ -78,7 +73,6 @@ io.on("connection", socket => {
     }
   });
 
-  // Aceitar amizade
   socket.on("acceptRequest", ({ from, to }) => {
     if (users[to] && users[to].requests.includes(from)) {
       users[to].requests = users[to].requests.filter(r => r !== from);
@@ -89,7 +83,6 @@ io.on("connection", socket => {
     }
   });
 
-  // Recusar amizade
   socket.on("rejectRequest", ({ from, to }) => {
     if (users[to] && users[to].requests.includes(from)) {
       users[to].requests = users[to].requests.filter(r => r !== from);
@@ -102,7 +95,42 @@ io.on("connection", socket => {
     if (sockets[to]) io.to(sockets[to]).emit("dm", { from: socket.username, msg });
   });
 
-  // Desconexão
+  // Configurações
+  socket.on("changeName", ({ oldName, newName }) => {
+    if (!users[newName] && users[oldName]) {
+      users[newName] = { ...users[oldName], username: newName, editedName: true };
+      delete users[oldName];
+      saveUsers();
+      if (sockets[oldName]) io.to(sockets[oldName]).emit("nameChanged", { newName });
+    }
+  });
+
+  socket.on("changePassword", ({ username, newPass }) => {
+    if (users[username]) {
+      users[username].password = newPass;
+      saveUsers();
+      if (sockets[username]) io.to(sockets[username]).emit("passwordChanged");
+    }
+  });
+
+  socket.on("changeColor", ({ username, color }) => {
+    if (users[username]) {
+      users[username].color = color;
+      saveUsers();
+    }
+  });
+
+  socket.on("changePhoto", ({ username, photo }) => {
+    if (users[username]) {
+      users[username].photo = photo;
+      saveUsers();
+    }
+  });
+
+  socket.on("getAllUsers", (_, callback) => {
+    callback(Object.keys(users));
+  });
+
   socket.on("disconnect", () => {
     if (socket.username) delete sockets[socket.username];
     console.log("Desconectado:", socket.id);

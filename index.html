@@ -8,16 +8,17 @@
 </head>
 <body>
 
-<canvas id="gameCanvas" width="1200" height="700"></canvas>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
 
 <div class="hud">
+
   <button id="loginBtn">Login</button>
-  <button id="notificationsBtn">Notificações</button>
   <button id="friendsBtn">Amigos</button>
+  <button id="notificationsBtn">Notificações</button>
   <button id="settingsBtn">Configurações</button>
 
   <div class="link-box">
-    <input type="text" id="linkInput" placeholder="Adicionar link">
+    <input type="text" id="linkInput" placeholder="Adicione um link">
     <button id="addLinkBtn">+</button>
   </div>
 
@@ -25,11 +26,8 @@
 </div>
 
 <div id="profileBallContainer"></div>
-<div id="profileMenu" class="profile-menu hidden">
-  <button id="logoutBtn">Sair</button>
-</div>
 
-<!-- Modais -->
+<!-- Login Modal -->
 <div id="loginModal" class="modal hidden">
   <div class="modal-content">
     <h2>Login / Registro</h2>
@@ -43,47 +41,63 @@
   </div>
 </div>
 
+<!-- Friends Modal -->
 <div id="friendsModal" class="generic-modal hidden">
-  <div class="modal-box" id="friendsContent">
+  <div class="modal-box">
     <h2>Amigos</h2>
-    <ul id="friendsList"></ul>
-    <h2>Pedidos de amizade</h2>
-    <ul id="requestsList"></ul>
     <input type="text" id="friendInput" placeholder="Nome do jogador">
     <button id="sendFriendRequestBtn">Enviar Pedido</button>
+    <h3>Meus Amigos</h3>
+    <ul id="friendsList"></ul>
+    <h3>Pedidos de Amizade</h3>
+    <ul id="requestsList"></ul>
     <button onclick="document.getElementById('friendsModal').classList.add('hidden')">Fechar</button>
   </div>
 </div>
 
+<!-- Chat Modal -->
+<div id="chatModal" class="generic-modal hidden">
+  <div class="modal-box">
+    <h2 id="chatFriendName">Chat</h2>
+    <div id="chatMessages" class="chat-messages"></div>
+    <input type="text" id="chatInput" placeholder="Digite sua mensagem">
+    <button id="sendChatBtn">Enviar</button>
+    <button onclick="document.getElementById('chatModal').classList.add('hidden')">Fechar</button>
+  </div>
+</div>
+
+<!-- Notifications Modal -->
 <div id="notificationsModal" class="generic-modal hidden">
-  <div class="modal-box" id="notificationsContent">
+  <div class="modal-box">
     <h2>Notificações</h2>
     <div id="notificationsList"></div>
     <button onclick="document.getElementById('notificationsModal').classList.add('hidden')">Fechar</button>
   </div>
 </div>
 
+<!-- Settings Modal -->
 <div id="settingsModal" class="generic-modal hidden">
-  <div class="modal-box" id="settingsContent">
+  <div class="modal-box">
     <h2>Configurações</h2>
-    <input type="text" id="newName" placeholder="Novo nome (1 vez)">
-    <input type="password" id="currentPassword" placeholder="Senha atual">
-    <input type="password" id="newPassword" placeholder="Nova senha">
-    <input type="color" id="newColor">
-    <input type="file" id="newPhoto">
-    <button id="saveSettingsBtn">Salvar</button>
-    <button onclick="document.getElementById('settingsModal').classList.add('hidden')">Fechar</button>
-  </div>
-</div>
 
-<!-- Chat DM -->
-<div id="chatModal" class="generic-modal hidden">
-  <div class="modal-box" id="chatContent">
-    <h2>Chat com <span id="chatFriendName"></span></h2>
-    <div id="chatMessages" class="chat-messages"></div>
-    <input type="text" id="chatInput" placeholder="Digite sua mensagem">
-    <button id="sendChatBtn">Enviar</button>
-    <button onclick="document.getElementById('chatModal').classList.add('hidden')">Fechar</button>
+    <h3>Mudar Nome</h3>
+    <input type="text" id="changeNameInput" placeholder="Novo Nome">
+    <button id="changeNameBtn">Alterar Nome</button>
+
+    <h3>Mudar Senha</h3>
+    <input type="password" id="changePassInput" placeholder="Senha Atual">
+    <input type="password" id="newPassInput" placeholder="Nova Senha">
+    <button id="changePassBtn">Alterar Senha</button>
+
+    <h3>Mudar Cor do Perfil</h3>
+    <input type="color" id="changeColorInput">
+    <button id="changeColorBtn">Alterar Cor</button>
+
+    <h3>Mudar Foto do Perfil</h3>
+    <input type="file" id="changePhotoInput" accept="image/*">
+    <button id="changePhotoBtn">Alterar Foto</button>
+
+    <button onclick="document.getElementById('settingsModal').classList.add('hidden')">Fechar</button>
   </div>
 </div>
 

@@ -1,56 +1,33 @@
-/* Reset e base */
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
-body { background-color: #000; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-canvas { background-color: #111; border-radius: 15px; display: block; margin: auto; border: 2px solid #444; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, Helvetica, sans-serif; background-color: #000; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+canvas { background-color: #111; border: 2px solid #444; display: block; margin: auto; border-radius: 10px; }
+.hud { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; }
+.hud button { padding: 5px 10px; border: none; border-radius: 5px; background-color: #3498db; color: #fff; cursor: pointer; font-weight: bold; transition: all 0.2s ease; }
+.hud button:hover { background-color: #2980b9; }
 
-/* HUD principal */
-.hud { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 12px; z-index: 1000; }
-.hud button { padding: 8px 15px; border: none; border-radius: 8px; background: linear-gradient(135deg,#3498db,#2980b9); color: #fff; cursor: pointer; font-weight: bold; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
-.hud button:hover { background: linear-gradient(135deg,#2980b9,#1c6ca9); transform: scale(1.05); }
+.link-box { display: flex; gap: 5px; margin-top:10px; }
+.link-box input[type="text"] { padding: 5px; border-radius: 5px; border: 1px solid #444; background-color: #222; color: #fff; flex: 1; }
 
-/* Link box */
-.link-box { display: flex; gap: 6px; margin-top: 10px; }
-.link-box input[type="text"] { padding: 6px; border-radius: 6px; border: 1px solid #444; background-color: #222; color: #fff; flex: 1; }
-.links-container { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
-.link-square { width: 120px; height: 60px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-weight: bold; color: #fff; cursor: pointer; background: linear-gradient(135deg,#3498db,#2980b9); box-shadow: 0 2px 6px rgba(0,0,0,0.6); transition: transform 0.2s, box-shadow 0.2s; text-align: center; }
-.link-square:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(52,152,219,0.7); }
+.links-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.link-square { width: 100px; height: 60px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-weight: bold; color: #fff; cursor: pointer; background: linear-gradient(135deg,#3498db,#2980b9); box-shadow: 0 2px 5px rgba(0,0,0,0.5); transition: transform 0.2s, box-shadow 0.2s; text-align: center; padding: 5px; }
+.link-square:hover { transform: scale(1.1); box-shadow: 0 4px 10px rgba(52,152,219,0.7); }
 
-/* Modais */
-.modal, .generic-modal { position: fixed; top:0; left:0; width:100%; height:100%; background-color: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+.modal, .generic-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; }
 .modal.hidden, .generic-modal.hidden { display: none; }
-.modal-content, .modal-box { background-color: #111; padding: 25px; border-radius: 12px; min-width: 320px; max-width: 520px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-.modal-content h2, .modal-box h2 { text-align: center; margin-bottom: 12px; color: #f1c40f; text-shadow: 1px 1px 3px #000; }
-.modal-content input, .modal-box input { padding: 8px; border-radius: 6px; border: 1px solid #444; background-color: #222; color: #fff; width: 100%; }
-.modal-buttons { display: flex; justify-content: space-between; gap: 6px; }
-.modal-buttons button { flex:1; }
+.modal-content, .modal-box { background-color: #111; padding: 20px; border-radius: 10px; min-width: 300px; max-width: 500px; display: flex; flex-direction: column; gap: 10px; }
+.modal-content h2, .modal-box h2 { text-align: center; margin-bottom: 10px; }
+.modal-content input, .modal-box input { padding: 5px; border-radius: 5px; border: 1px solid #444; background-color: #222; color: #fff; margin-bottom: 10px; width: 100%; }
 
-/* Profile ball */
-.profile-ball { width: 55px; height: 55px; border-radius: 50%; background-color: #3498db; color: #fff; display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: 2px solid #fff; position: fixed; top: 20px; right: 20px; z-index: 1500; transition: transform 0.2s, box-shadow 0.2s; }
-.profile-ball:hover { transform: scale(1.15); box-shadow: 0 0 10px rgba(52,152,219,0.7); }
-.profile-menu { position: absolute; top: 75px; right: 20px; background-color: #222; border-radius: 10px; display: flex; flex-direction: column; gap: 6px; padding: 12px; z-index: 1501; }
-.profile-menu.hidden { display: none; }
-.profile-menu button { background-color: #333; border:none; border-radius:6px; padding:6px; color:#fff; cursor:pointer; text-align:left; font-size:14px; transition: all 0.2s; }
-.profile-menu button:hover { background-color:#444; }
+.modal-buttons { display: flex; justify-content: space-between; gap: 5px; }
+.modal-buttons button { flex: 1; }
 
-/* Notificações */
-.notifications { position: fixed; top: 85px; right: 20px; display: flex; flex-direction: column; gap: 6px; z-index: 2000; }
-.notification { padding: 12px 18px; border-radius: 8px; background-color: #f39c12; color: #fff; font-weight:bold; animation: popIn 0.3s ease; opacity: 0.95; display: flex; align-items: center; gap:6px; box-shadow: 0 0 10px rgba(0,0,0,0.6); }
-.notification button { padding: 3px 6px; border-radius: 4px; border: none; cursor: pointer; font-weight: normal; background-color:#2980b9; color:#fff; }
-.notification button:hover { background-color:#1c6ca9; }
+.profile-ball { width: 50px; height: 50px; border-radius: 50%; background-color: #3498db; color: #fff; display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: 2px solid #fff; position: fixed; top: 20px; right: 20px; z-index: 1500; transition: transform 0.2s; }
+.profile-ball:hover { transform: scale(1.1); }
 
-/* Chat DM */
-#chatContent { display:flex; flex-direction: column; gap:8px; }
-.chat-messages { background-color: #222; flex:1; padding:8px; border-radius:6px; max-height:300px; overflow-y:auto; color:#fff; font-size:14px; }
-.chat-messages .msg { margin-bottom:6px; }
-.chat-messages .msg span { font-weight:bold; margin-right:4px; }
-#chatInput { padding:8px; border-radius:6px; border:1px solid #444; background-color:#111; color:#fff; width:100%; }
-#sendChatBtn { padding:6px; border:none; border-radius:6px; background:linear-gradient(135deg,#3498db,#2980b9); color:#fff; cursor:pointer; transition:0.2s; }
-#sendChatBtn:hover { background:linear-gradient(135deg,#2980b9,#1c6ca9); }
+.chat-messages { max-height: 200px; overflow-y: auto; border: 1px solid #444; padding: 5px; background: #222; margin-bottom: 5px; }
 
-/* Animação de pop-in */
-@keyframes popIn { 0% { transform: scale(0); opacity:0 } 80% { transform: scale(1.1); opacity:1 } 100% { transform: scale(1); } }
+.notifications { position: fixed; top: 80px; right: 20px; display: flex; flex-direction: column; gap: 5px; z-index: 2000; }
+.notification { padding: 10px 15px; border-radius: 5px; background-color: #f39c12; color: #fff; animation: popIn 0.3s ease; opacity: 0.9; }
+@keyframes popIn { 0%{transform:scale(0);opacity:0}80%{transform:scale(1.1);opacity:1}100%{transform:scale(1)} }
 
-/* Scroll customizado para listas */
-ul::-webkit-scrollbar, .chat-messages::-webkit-scrollbar { width: 8px; }
-ul::-webkit-scrollbar-thumb, .chat-messages::-webkit-scrollbar-thumb { background-color: #3498db; border-radius: 4px; }
-ul::-webkit-scrollbar-track, .chat-messages::-webkit-scrollbar-track { background-color: #222; border-radius: 4px; }
+button:hover { cursor: pointer; }
