@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Infestation Multiplayer - Menu</title>
+  <title>Infestation Multiplayer</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Canvas animado de fundo -->
-  <canvas id="gameCanvas" width="1200" height="700"></canvas>
+  <!-- Canvas do jogo -->
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
 
   <!-- HUD principal -->
   <div class="hud">
@@ -28,10 +28,10 @@
     <div class="links-container" id="linksContainer"></div>
   </div>
 
-  <!-- Perfil flutuante -->
+  <!-- Bolinha/foto de perfil -->
   <div id="profileBallContainer"></div>
 
-  <!-- Modal de login/registro -->
+  <!-- Modal de Login / Registro -->
   <div id="loginModal" class="modal hidden">
     <div class="modal-content">
       <h2>Login / Registro</h2>
@@ -45,21 +45,21 @@
     </div>
   </div>
 
-  <!-- Modal de amigos -->
+  <!-- Modal Amigos -->
   <div id="friendsModal" class="generic-modal hidden">
     <div class="modal-box">
       <h2>Amigos</h2>
       <input type="text" id="friendInput" placeholder="Nome do jogador">
       <button id="sendFriendRequestBtn">Enviar Pedido</button>
       <h3>Amigos</h3>
-      <ul id="friendsList" class="friends-list"></ul>
+      <ul id="friendsList"></ul>
       <h3>Pedidos</h3>
-      <ul id="requestsList" class="requests-list"></ul>
+      <ul id="requestsList"></ul>
       <button onclick="document.getElementById('friendsModal').classList.add('hidden')">Fechar</button>
     </div>
   </div>
 
-  <!-- Modal de notificações -->
+  <!-- Modal Notificações -->
   <div id="notificationsModal" class="generic-modal hidden">
     <div class="modal-box">
       <h2>Notificações</h2>
@@ -68,24 +68,28 @@
     </div>
   </div>
 
-  <!-- Modal de configurações -->
+  <!-- Modal Configurações -->
   <div id="settingsModal" class="generic-modal hidden">
     <div class="modal-box">
       <h2>Configurações</h2>
 
+      <!-- Alterar Nome -->
       <h3>Mudar Nome</h3>
       <input type="text" id="changeNameInput" placeholder="Novo nome">
       <button id="changeNameBtn">Alterar Nome</button>
 
+      <!-- Alterar Senha -->
       <h3>Mudar Senha</h3>
       <input type="password" id="changePassInput" placeholder="Senha atual">
       <input type="password" id="newPassInput" placeholder="Nova senha">
       <button id="changePassBtn">Alterar Senha</button>
 
+      <!-- Alterar Cor do Perfil -->
       <h3>Mudar Cor do Perfil</h3>
       <input type="color" id="changeColorInput">
       <button id="changeColorBtn">Alterar Cor</button>
 
+      <!-- Alterar Foto do Perfil -->
       <h3>Mudar Foto do Perfil</h3>
       <input type="file" id="changePhotoInput" accept="image/*">
       <button id="changePhotoBtn">Alterar Foto</button>
@@ -108,7 +112,7 @@
     </div>
   </div>
 
-  <!-- Socket.IO e script principal -->
+  <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
 </body>

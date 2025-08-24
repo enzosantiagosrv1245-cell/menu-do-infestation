@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentUser = null;
   let userProfile = null;
+  let currentChat = null;
 
   // --- HUD e links ---
   const linksContainer = document.getElementById("linksContainer");
@@ -91,6 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
   socket.on("loginSuccess", data => {
     currentUser = data.username;
     userProfile = data;
+    if (!userProfile.messages) userProfile.messages = {};
     loginModal.classList.add("hidden");
     loginBtn.style.display = "none";
     createProfileUI();
@@ -128,15 +130,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const notificationsBtn = document.getElementById("notificationsBtn");
   const notificationsModal = document.getElementById("notificationsModal");
   const notificationsList = document.getElementById("notificationsList");
+  const notificationsContainer = document.getElementById("notificationsContainer");
+
   notificationsBtn.addEventListener("click", () => notificationsModal.classList.remove("hidden"));
 
   function showNotification(text, color = "yellow") {
-    const container = document.getElementById("notificationsContainer");
     const div = document.createElement("div");
     div.className = "notification";
     div.style.backgroundColor = color;
     div.innerHTML = `<b>${text}</b>`;
-    container.appendChild(div);
+    notificationsContainer.appendChild(div);
     setTimeout(() => div.remove(), 4000);
   }
 
@@ -175,6 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
       socket.emit("acceptRequest", { from, to: currentUser });
       notif.remove();
       updateFriendsUI();
+      renderChatFriends();
     };
     const rejectBtn = document.createElement("button");
     rejectBtn.textContent = "Recusar";
@@ -184,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     notif.appendChild(acceptBtn);
     notif.appendChild(rejectBtn);
-    notificationsList.appendChild(notif);
+    notificationsContainer.appendChild(notif);
   });
 
   socket.on("friendAccepted", ({ from }) => {
@@ -198,29 +202,28 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!userProfile) return;
     friendsList.innerHTML = "";
     requestsList.innerHTML = "";
-
     userProfile.friends.forEach(f => {
       const li = document.createElement("li");
       li.textContent = f;
       li.onclick = () => openChat(f);
       friendsList.appendChild(li);
     });
-
     userProfile.requests.forEach(r => {
       const li = document.createElement("li");
       li.textContent = r;
       const accept = document.createElement("button");
       accept.textContent = "Aceitar";
       accept.onclick = () => {
-        socket.emit("acceptRequest", { from: r, to: currentUser });
+        socket.emit("acceptRequest",{from:r,to:currentUser});
         userProfile.friends.push(r);
         userProfile.requests = userProfile.requests.filter(req => req !== r);
         updateFriendsUI();
+        renderChatFriends();
       };
       const reject = document.createElement("button");
       reject.textContent = "Recusar";
       reject.onclick = () => {
-        socket.emit("rejectRequest", { from: r, to: currentUser });
+        socket.emit("rejectRequest",{from:r,to:currentUser});
         userProfile.requests = userProfile.requests.filter(req => req !== r);
         updateFriendsUI();
       };
@@ -235,7 +238,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatMessagesFloating = document.getElementById("chatMessagesFloating");
   const chatInputFloating = document.getElementById("chatInputFloating");
   const sendChatFloating = document.getElementById("sendChatFloating");
-  let currentChat = null;
 
   function renderChatFriends() {
     chatFriendsContainer.innerHTML = "";
@@ -251,22 +253,29 @@ document.addEventListener("DOMContentLoaded", () => {
   function openChat(friend) {
     currentChat = friend;
     chatMessagesFloating.innerHTML = `<div class="chat-header">Chat com ${friend}</div>`;
+    if (userProfile.messages[friend]) {
+      userProfile.messages[friend].forEach(m => appendMessage(m.from, m.msg));
+    }
   }
 
   sendChatFloating.addEventListener("click", () => {
     const msg = chatInputFloating.value.trim();
     if (!msg || !currentChat) return;
-    socket.emit("dm", { to: currentChat, msg });
-    appendMessage(currentUser, msg);
-    chatInputFloating.value = "";
+    socket.emit("dm",{to:currentChat,msg});
+    if (!userProfile.messages[currentChat]) userProfile.messages[currentChat] = [];
+    userProfile.messages[currentChat].push({from:currentUser,msg});
+    appendMessage(currentUser,msg);
+    chatInputFloating.value="";
   });
 
   socket.on("dm", ({ from, msg }) => {
-    if (from === currentChat) appendMessage(from, msg);
-    showNotification(`💬 Nova mensagem de ${from}`, "blue");
+    if (!userProfile.messages[from]) userProfile.messages[from] = [];
+    userProfile.messages[from].push({from,msg});
+    if (from === currentChat) appendMessage(from,msg);
+    showNotification(`💬 Nova mensagem de ${from}`,"blue");
   });
 
-  function appendMessage(sender, msg) {
+  function appendMessage(sender,msg){
     const div = document.createElement("div");
     div.className = "chat-msg";
     div.innerHTML = `<b>${sender}:</b> ${msg}`;
@@ -287,54 +296,53 @@ document.addEventListener("DOMContentLoaded", () => {
   const changePhotoInput = document.getElementById("changePhotoInput");
   const changePhotoBtn = document.getElementById("changePhotoBtn");
 
-  settingsBtn.addEventListener("click", () => settingsModal.classList.remove("hidden"));
+  settingsBtn.addEventListener("click",()=>settingsModal.classList.remove("hidden"));
 
-  changeNameBtn.addEventListener("click", () => {
+  changeNameBtn.addEventListener("click",()=>{
     const newName = changeNameInput.value.trim();
-    if (!newName) return showNotification("⚠️ Digite um nome válido", "red");
-    if (userProfile.editedName) return showNotification("❌ Você só pode mudar o nome 1 vez!", "red");
-    socket.emit("changeName", { oldName: currentUser, newName });
+    if(!newName)return showNotification("⚠️ Digite um nome válido","red");
+    if(userProfile.editedName)return showNotification("❌ Você só pode mudar o nome 1 vez!","red");
+    socket.emit("changeName",{oldName:currentUser,newName});
   });
 
-  changePassBtn.addEventListener("click", () => {
+  changePassBtn.addEventListener("click",()=>{
     const pass = changePassInput.value.trim();
     const newPass = newPassInput.value.trim();
-    if (!pass || !newPass) return showNotification("⚠️ Preencha todos os campos!", "red");
-    if (pass !== userProfile.password) return showNotification("❌ Senha atual incorreta!", "red");
-    socket.emit("changePassword", { username: currentUser, newPass });
+    if(!pass || !newPass)return showNotification("⚠️ Preencha todos os campos!","red");
+    if(pass!==userProfile.password)return showNotification("❌ Senha atual incorreta!","red");
+    socket.emit("changePassword",{username:currentUser,newPass});
   });
 
-  changeColorBtn.addEventListener("click", () => {
+  changeColorBtn.addEventListener("click",()=>{
     const color = changeColorInput.value;
-    userProfile.color = color;
+    userProfile.color=color;
     createProfileUI();
-    socket.emit("changeColor", { username: currentUser, color });
+    socket.emit("changeColor",{username:currentUser,color});
   });
 
-  changePhotoBtn.addEventListener("click", () => {
-    const file = changePhotoInput.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      userProfile.photo = reader.result;
+  changePhotoBtn.addEventListener("click",()=>{
+    const file=changePhotoInput.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      userProfile.photo=reader.result;
       createProfileUI();
-      socket.emit("changePhoto", { username: currentUser, photo: reader.result });
+      socket.emit("changePhoto",{username:currentUser,photo:reader.result});
     };
     reader.readAsDataURL(file);
   });
 
-  socket.on("nameChanged", (data) => {
-    currentUser = data.newName;
-    userProfile.username = data.newName;
-    userProfile.editedName = true;
+  socket.on("nameChanged",data=>{
+    currentUser=data.newName;
+    userProfile.username=data.newName;
+    userProfile.editedName=true;
     createProfileUI();
-    showNotification("✅ Nome alterado com sucesso!", "green");
+    showNotification("✅ Nome alterado com sucesso!","green");
     renderChatFriends();
   });
 
-  socket.on("passwordChanged", () => {
-    userProfile.password = newPassInput.value;
-    showNotification("✅ Senha alterada com sucesso!", "green");
+  socket.on("passwordChanged",()=>{
+    userProfile.password=newPassInput.value;
+    showNotification("✅ Senha alterada com sucesso!","green");
   });
-
 });
