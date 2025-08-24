@@ -1,108 +1,115 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Infestation Multiplayer</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infestation Multiplayer - Menu</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<canvas id="gameCanvas" width="800" height="600"></canvas>
+  <!-- Canvas animado de fundo -->
+  <canvas id="gameCanvas" width="1200" height="700"></canvas>
 
-<div class="hud">
+  <!-- HUD principal -->
+  <div class="hud">
+    <button id="loginBtn">Login</button>
+    <button id="settingsBtn">Configurações</button>
+    <button id="friendsBtn">Amigos</button>
+    <button id="notificationsBtn">Notificações</button>
 
-  <button id="loginBtn">Login</button>
-  <button id="settingsBtn">Configurações</button>
-  <button id="friendsBtn">Amigos</button>
-  <button id="notificationsBtn">Notificações</button>
+    <!-- Adicionar links -->
+    <div class="link-box">
+      <input type="text" id="linkInput" placeholder="Adicione um link">
+      <button id="addLinkBtn">+</button>
+    </div>
 
-  <div class="link-box">
-    <input type="text" id="linkInput" placeholder="Adicione um link">
-    <button id="addLinkBtn">+</button>
+    <!-- Container dos links -->
+    <div class="links-container" id="linksContainer"></div>
   </div>
 
-  <div class="links-container" id="linksContainer"></div>
-</div>
+  <!-- Perfil flutuante -->
+  <div id="profileBallContainer"></div>
 
-<div id="profileBallContainer"></div>
-
-<!-- Login Modal -->
-<div id="loginModal" class="modal hidden">
-  <div class="modal-content">
-    <h2>Login / Registro</h2>
-    <input type="text" id="username" placeholder="Usuário">
-    <input type="password" id="password" placeholder="Senha">
-    <div class="modal-buttons">
-      <button id="registerBtn">Criar Conta</button>
-      <button id="loginSubmitBtn">Entrar</button>
-      <button id="closeModalBtn">Fechar</button>
+  <!-- Modal de login/registro -->
+  <div id="loginModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Login / Registro</h2>
+      <input type="text" id="username" placeholder="Usuário">
+      <input type="password" id="password" placeholder="Senha">
+      <div class="modal-buttons">
+        <button id="registerBtn">Criar Conta</button>
+        <button id="loginSubmitBtn">Entrar</button>
+        <button id="closeModalBtn">Fechar</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Friends Modal -->
-<div id="friendsModal" class="generic-modal hidden">
-  <div class="modal-box">
-    <h2>Amigos</h2>
-    <input type="text" id="friendInput" placeholder="Nome do jogador">
-    <button id="sendFriendRequestBtn">Enviar Pedido</button>
-    <h3>Amigos</h3>
-    <ul id="friendsList"></ul>
-    <h3>Pedidos</h3>
-    <ul id="requestsList"></ul>
-    <button onclick="document.getElementById('friendsModal').classList.add('hidden')">Fechar</button>
+  <!-- Modal de amigos -->
+  <div id="friendsModal" class="generic-modal hidden">
+    <div class="modal-box">
+      <h2>Amigos</h2>
+      <input type="text" id="friendInput" placeholder="Nome do jogador">
+      <button id="sendFriendRequestBtn">Enviar Pedido</button>
+      <h3>Amigos</h3>
+      <ul id="friendsList" class="friends-list"></ul>
+      <h3>Pedidos</h3>
+      <ul id="requestsList" class="requests-list"></ul>
+      <button onclick="document.getElementById('friendsModal').classList.add('hidden')">Fechar</button>
+    </div>
   </div>
-</div>
 
-<!-- Chat Modal -->
-<div id="chatModal" class="generic-modal hidden">
-  <div class="modal-box">
-    <h2 id="chatFriendName"></h2>
-    <div id="chatMessages" style="height:200px;overflow-y:auto;background:#222;padding:5px;margin-bottom:5px;color:#fff;"></div>
-    <input type="text" id="chatInput" placeholder="Digite uma mensagem">
-    <button id="sendChatBtn">Enviar</button>
-    <button onclick="document.getElementById('chatModal').classList.add('hidden')">Fechar</button>
+  <!-- Modal de notificações -->
+  <div id="notificationsModal" class="generic-modal hidden">
+    <div class="modal-box">
+      <h2>Notificações</h2>
+      <div id="notificationsList"></div>
+      <button onclick="document.getElementById('notificationsModal').classList.add('hidden')">Fechar</button>
+    </div>
   </div>
-</div>
 
-<!-- Notifications Modal -->
-<div id="notificationsModal" class="generic-modal hidden">
-  <div class="modal-box">
-    <h2>Notificações</h2>
-    <div id="notificationsList"></div>
-    <button onclick="document.getElementById('notificationsModal').classList.add('hidden')">Fechar</button>
+  <!-- Modal de configurações -->
+  <div id="settingsModal" class="generic-modal hidden">
+    <div class="modal-box">
+      <h2>Configurações</h2>
+
+      <h3>Mudar Nome</h3>
+      <input type="text" id="changeNameInput" placeholder="Novo nome">
+      <button id="changeNameBtn">Alterar Nome</button>
+
+      <h3>Mudar Senha</h3>
+      <input type="password" id="changePassInput" placeholder="Senha atual">
+      <input type="password" id="newPassInput" placeholder="Nova senha">
+      <button id="changePassBtn">Alterar Senha</button>
+
+      <h3>Mudar Cor do Perfil</h3>
+      <input type="color" id="changeColorInput">
+      <button id="changeColorBtn">Alterar Cor</button>
+
+      <h3>Mudar Foto do Perfil</h3>
+      <input type="file" id="changePhotoInput" accept="image/*">
+      <button id="changePhotoBtn">Alterar Foto</button>
+
+      <button onclick="document.getElementById('settingsModal').classList.add('hidden')">Fechar</button>
+    </div>
   </div>
-</div>
 
-<!-- Settings Modal -->
-<div id="settingsModal" class="generic-modal hidden">
-  <div class="modal-box">
-    <h2>Configurações</h2>
-    <h3>Mudar Nome</h3>
-    <input type="text" id="changeNameInput" placeholder="Novo nome">
-    <button id="changeNameBtn">Alterar Nome</button>
+  <!-- Container de notificações flutuantes -->
+  <div id="notificationsContainer" class="notifications"></div>
 
-    <h3>Mudar Senha</h3>
-    <input type="password" id="changePassInput" placeholder="Senha atual">
-    <input type="password" id="newPassInput" placeholder="Nova senha">
-    <button id="changePassBtn">Alterar Senha</button>
-
-    <h3>Mudar Cor do Perfil</h3>
-    <input type="color" id="changeColorInput">
-    <button id="changeColorBtn">Alterar Cor</button>
-
-    <h3>Mudar Foto do Perfil</h3>
-    <input type="file" id="changePhotoInput" accept="image/*">
-    <button id="changePhotoBtn">Alterar Foto</button>
-
-    <button onclick="document.getElementById('settingsModal').classList.add('hidden')">Fechar</button>
+  <!-- Chat flutuante -->
+  <div id="chatFloating" class="hidden">
+    <div id="chatHeader">Chat</div>
+    <div id="chatFriends"></div>
+    <div id="chatMessagesFloating"></div>
+    <div id="chatInputBox">
+      <input type="text" id="chatInputFloating" placeholder="Digite uma mensagem...">
+      <button id="sendChatFloating">Enviar</button>
+    </div>
   </div>
-</div>
 
-<div id="notificationsContainer" class="notifications"></div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="client.js"></script>
+  <!-- Socket.IO e script principal -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
 </body>
 </html>

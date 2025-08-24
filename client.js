@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
       linkQueue.push(url);
       renderLinks();
       socket.emit("newLink", url);
-    } else showNotification("Link inválido!", "red");
+    } else showNotification("⚠️ Link inválido!", "red");
   });
 
   function renderLinks() {
@@ -75,19 +75,19 @@ document.addEventListener("DOMContentLoaded", () => {
   registerBtn.addEventListener("click", () => {
     const user = usernameInput.value.trim();
     const pass = passwordInput.value.trim();
-    if (!user || !pass) return showNotification("Preencha todos os campos!", "red");
+    if (!user || !pass) return showNotification("⚠️ Preencha todos os campos!", "red");
     socket.emit("register", { username: user, password: pass });
   });
 
   loginSubmitBtn.addEventListener("click", () => {
     const user = usernameInput.value.trim();
     const pass = passwordInput.value.trim();
-    if (!user || !pass) return showNotification("Preencha todos os campos!", "red");
+    if (!user || !pass) return showNotification("⚠️ Preencha todos os campos!", "red");
     socket.emit("login", { username: user, password: pass });
   });
 
-  socket.on("registerSuccess", data => showNotification("Conta criada!", "green"));
-  socket.on("registerError", msg => showNotification(msg, "red"));
+  socket.on("registerSuccess", () => showNotification("✅ Conta criada!", "green"));
+  socket.on("registerError", msg => showNotification("❌ " + msg, "red"));
   socket.on("loginSuccess", data => {
     currentUser = data.username;
     userProfile = data;
@@ -95,9 +95,11 @@ document.addEventListener("DOMContentLoaded", () => {
     loginBtn.style.display = "none";
     createProfileUI();
     updateFriendsUI();
-    showNotification("Login realizado!", "green");
+    showNotification("🎉 Login realizado!", "green");
+    document.getElementById("chatFloating").classList.remove("hidden");
+    renderChatFriends();
   });
-  socket.on("loginError", msg => showNotification(msg, "red"));
+  socket.on("loginError", msg => showNotification("❌ " + msg, "red"));
 
   // --- Perfil ---
   function createProfileUI() {
@@ -105,8 +107,15 @@ document.addEventListener("DOMContentLoaded", () => {
     container.innerHTML = "";
     const ball = document.createElement("div");
     ball.className = "profile-ball";
-    ball.textContent = userProfile.username[0].toUpperCase();
-    ball.style.backgroundColor = userProfile.color;
+    if (userProfile.photo) {
+      const img = document.createElement("img");
+      img.src = userProfile.photo;
+      img.className = "profile-img";
+      ball.appendChild(img);
+    } else {
+      ball.textContent = userProfile.username[0].toUpperCase();
+      ball.style.backgroundColor = userProfile.color;
+    }
     container.appendChild(ball);
 
     ball.onclick = () => {
@@ -126,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const div = document.createElement("div");
     div.className = "notification";
     div.style.backgroundColor = color;
-    div.textContent = text;
+    div.innerHTML = `<b>${text}</b>`;
     container.appendChild(div);
     setTimeout(() => div.remove(), 4000);
   }
@@ -144,17 +153,22 @@ document.addEventListener("DOMContentLoaded", () => {
   sendFriendRequestBtn.addEventListener("click", () => {
     const target = friendInput.value.trim();
     if (!target) return;
-    if (target === currentUser) return showNotification("Não pode enviar para você mesmo", "red");
+    if (target === currentUser) return showNotification("⚠️ Não pode enviar para você mesmo", "red");
     socket.emit("checkUserExists", target, exists => {
-      if (!exists) return showNotification("Jogador não existe", "red");
-      socket.emit("friendRequest", { from: currentUser, to: target });
-      showNotification("Pedido enviado!", "green");
+      if (!exists) return showNotification("❌ Jogador não existe", "red");
+      socket.emit("friendRequest", { from: currentUser, to: target, photo: userProfile.photo });
+      showNotification("📩 Pedido enviado!", "green");
     });
   });
 
-  socket.on("friendRequestNotification", ({ from, color }) => {
+  socket.on("friendRequestNotification", ({ from, color, photo }) => {
     const notif = document.createElement("div");
-    notif.innerHTML = `Novo pedido de amizade de <span style="color:${color}">${from}</span>`;
+    notif.className = "friend-request";
+    notif.innerHTML = `
+      ${photo ? `<img src="${photo}" class="profile-img-small">` 
+              : `<span class="profile-ball-small" style="background:${color}">${from[0].toUpperCase()}</span>`}
+      <span><b>${from}</b> quer ser seu amigo</span>
+    `;
     const acceptBtn = document.createElement("button");
     acceptBtn.textContent = "Aceitar";
     acceptBtn.onclick = () => {
@@ -174,9 +188,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   socket.on("friendAccepted", ({ from }) => {
-    showNotification(`Você e ${from} agora são amigos!`, "green");
+    showNotification(`🤝 Você e ${from} agora são amigos!`, "green");
     if (!userProfile.friends.includes(from)) userProfile.friends.push(from);
     updateFriendsUI();
+    renderChatFriends();
   });
 
   function updateFriendsUI() {
@@ -215,39 +230,48 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Chat DM ---
-  const chatModal = document.getElementById("chatModal");
-  const chatFriendName = document.getElementById("chatFriendName");
-  const chatMessages = document.getElementById("chatMessages");
-  const chatInput = document.getElementById("chatInput");
-  const sendChatBtn = document.getElementById("sendChatBtn");
+  // --- Chat flutuante ---
+  const chatFriendsContainer = document.getElementById("chatFriends");
+  const chatMessagesFloating = document.getElementById("chatMessagesFloating");
+  const chatInputFloating = document.getElementById("chatInputFloating");
+  const sendChatFloating = document.getElementById("sendChatFloating");
   let currentChat = null;
+
+  function renderChatFriends() {
+    chatFriendsContainer.innerHTML = "";
+    userProfile.friends.forEach(f => {
+      const btn = document.createElement("button");
+      btn.className = "chat-friend-btn";
+      btn.textContent = f;
+      btn.onclick = () => openChat(f);
+      chatFriendsContainer.appendChild(btn);
+    });
+  }
 
   function openChat(friend) {
     currentChat = friend;
-    chatFriendName.textContent = `Chat com ${friend}`;
-    chatMessages.innerHTML = "";
-    chatModal.classList.remove("hidden");
+    chatMessagesFloating.innerHTML = `<div class="chat-header">Chat com ${friend}</div>`;
   }
 
-  sendChatBtn.addEventListener("click", () => {
-    const msg = chatInput.value.trim();
+  sendChatFloating.addEventListener("click", () => {
+    const msg = chatInputFloating.value.trim();
     if (!msg || !currentChat) return;
     socket.emit("dm", { to: currentChat, msg });
     appendMessage(currentUser, msg);
-    chatInput.value = "";
+    chatInputFloating.value = "";
   });
 
   socket.on("dm", ({ from, msg }) => {
     if (from === currentChat) appendMessage(from, msg);
-    showNotification(`Mensagem de ${from}`, "blue");
+    showNotification(`💬 Nova mensagem de ${from}`, "blue");
   });
 
   function appendMessage(sender, msg) {
     const div = document.createElement("div");
-    div.textContent = `${sender}: ${msg}`;
-    chatMessages.appendChild(div);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    div.className = "chat-msg";
+    div.innerHTML = `<b>${sender}:</b> ${msg}`;
+    chatMessagesFloating.appendChild(div);
+    chatMessagesFloating.scrollTop = chatMessagesFloating.scrollHeight;
   }
 
   // --- Configurações ---
@@ -267,16 +291,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   changeNameBtn.addEventListener("click", () => {
     const newName = changeNameInput.value.trim();
-    if (!newName) return showNotification("Digite um nome válido", "red");
-    if (userProfile.editedName) return showNotification("Você só pode mudar o nome 1 vez!", "red");
+    if (!newName) return showNotification("⚠️ Digite um nome válido", "red");
+    if (userProfile.editedName) return showNotification("❌ Você só pode mudar o nome 1 vez!", "red");
     socket.emit("changeName", { oldName: currentUser, newName });
   });
 
   changePassBtn.addEventListener("click", () => {
     const pass = changePassInput.value.trim();
     const newPass = newPassInput.value.trim();
-    if (!pass || !newPass) return showNotification("Preencha todos os campos!", "red");
-    if (pass !== userProfile.password) return showNotification("Senha atual incorreta!", "red");
+    if (!pass || !newPass) return showNotification("⚠️ Preencha todos os campos!", "red");
+    if (pass !== userProfile.password) return showNotification("❌ Senha atual incorreta!", "red");
     socket.emit("changePassword", { username: currentUser, newPass });
   });
 
@@ -304,12 +328,13 @@ document.addEventListener("DOMContentLoaded", () => {
     userProfile.username = data.newName;
     userProfile.editedName = true;
     createProfileUI();
-    showNotification("Nome alterado com sucesso!", "green");
+    showNotification("✅ Nome alterado com sucesso!", "green");
+    renderChatFriends();
   });
 
   socket.on("passwordChanged", () => {
     userProfile.password = newPassInput.value;
-    showNotification("Senha alterada com sucesso!", "green");
+    showNotification("✅ Senha alterada com sucesso!", "green");
   });
 
 });
