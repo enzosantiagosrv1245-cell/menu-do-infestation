@@ -8,14 +8,12 @@
 </head>
 <body>
 
-  <!-- Canvas do jogo -->
+  <!-- Canvas do jogo com fundo animado -->
   <canvas id="gameCanvas" width="800" height="600"></canvas>
 
   <!-- HUD -->
   <div class="hud">
     <button id="loginBtn">Login</button>
-    <button id="settingsBtn">Configurações</button>
-    <button id="friendsBtn">Amigos</button>
 
     <!-- Adicionar links -->
     <div class="link-box">
@@ -88,17 +86,17 @@
   <div id="notificationsContainer" class="notifications"></div>
 
   <!-- Chat flutuante -->
-  <div id="chatFloating" class="hidden">
+  <div id="chatFloating">
     <div id="chatHeader">Chat</div>
     <div id="chatFriends"></div>
-    <div id="chatMessagesFloating" style="max-height: 200px; overflow-y:auto;"></div>
+    <div id="chatMessagesFloating"></div>
     <div id="chatInputBox">
       <input type="text" id="chatInputFloating" placeholder="Digite uma mensagem...">
       <button id="sendChatFloating">Enviar</button>
     </div>
   </div>
 
-  <!-- Sockets -->
+  <!-- Socket.io -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
 </body>

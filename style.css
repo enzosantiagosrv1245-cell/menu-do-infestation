@@ -10,9 +10,6 @@ body {
   color: #fff;
   height: 100vh;
   overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 /* Canvas */
@@ -34,6 +31,7 @@ canvas {
   gap: 10px;
   z-index: 1000;
 }
+
 .hud button {
   padding: 5px 10px;
   border: none;
@@ -44,6 +42,7 @@ canvas {
   font-weight: bold;
   transition: all 0.2s ease;
 }
+
 .hud button:hover {
   background-color: #2980b9;
 }
@@ -53,6 +52,7 @@ canvas {
   display: flex;
   gap: 5px;
 }
+
 .link-box input[type="text"] {
   padding: 5px;
   border-radius: 5px;
@@ -68,6 +68,7 @@ canvas {
   gap: 10px;
   margin-top: 10px;
 }
+
 .link-square {
   height: 80px;
   border-radius: 12px;
@@ -83,6 +84,7 @@ canvas {
   text-align: center;
   padding: 5px;
 }
+
 .link-square:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 10px rgba(52,152,219,0.7);
@@ -99,9 +101,11 @@ canvas {
   align-items: center;
   z-index: 2000;
 }
+
 .modal.hidden, .generic-modal.hidden {
   display: none;
 }
+
 .modal-content, .modal-box {
   background-color: #111;
   padding: 20px;
@@ -112,6 +116,7 @@ canvas {
   flex-direction: column;
   gap: 10px;
 }
+
 .modal-content h2, .modal-box h2 {
   text-align: center;
   margin-bottom: 10px;
@@ -139,6 +144,7 @@ canvas {
   font-weight: bold;
   transition: all 0.2s;
 }
+
 .modal-box button:hover, .modal-content button:hover {
   background-color: #2980b9;
 }
@@ -163,12 +169,14 @@ canvas {
   transition: transform 0.2s;
   overflow: hidden;
 }
+
 .profile-ball img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
 }
+
 .profile-ball:hover {
   transform: scale(1.1);
 }
@@ -178,6 +186,7 @@ canvas {
   list-style: none;
   padding-left: 0;
 }
+
 .friends-list li, .requests-list li {
   display: flex;
   justify-content: space-between;
@@ -186,12 +195,13 @@ canvas {
   margin-bottom: 3px;
   border-radius: 5px;
 }
+
 .friends-list li:hover, .requests-list li:hover {
   background-color: #333;
   cursor: pointer;
 }
 
-/* Notificações */
+/* Notificações flutuantes */
 .notifications {
   position: fixed;
   top: 80px;
@@ -201,6 +211,7 @@ canvas {
   gap: 5px;
   z-index: 2000;
 }
+
 .notification {
   padding: 10px 15px;
   border-radius: 5px;
@@ -210,8 +221,10 @@ canvas {
   font-weight: bold;
   animation: popIn 0.3s ease;
   opacity: 0.95;
-  margin-bottom: 3px;
+  max-width: 250px;
+  word-wrap: break-word;
 }
+
 @keyframes popIn {
   0% { transform: scale(0); opacity:0 }
   80% { transform: scale(1.1); opacity:1 }
@@ -224,7 +237,7 @@ canvas {
   bottom: 10px;
   right: 10px;
   width: 300px;
-  max-height: 400px;
+  max-height: 350px; /* Limite de altura */
   background: #111;
   border: 2px solid #3498db;
   border-radius: 10px;
@@ -233,6 +246,7 @@ canvas {
   overflow: hidden;
   z-index: 2500;
 }
+
 #chatHeader {
   background: #3498db;
   color: #fff;
@@ -240,28 +254,33 @@ canvas {
   text-align: center;
   font-weight: bold;
 }
+
 #chatFriends {
-  max-height: 100px;
+  max-height: 80px;
   overflow-y: auto;
   background: #222;
 }
+
 #chatFriends div {
   padding: 5px;
   cursor: pointer;
 }
+
 #chatFriends div:hover {
   background: #333;
 }
+
 #chatMessagesFloating {
   flex: 1;
-  max-height: 200px;
   overflow-y: auto;
   padding: 5px;
   font-size: 14px;
 }
+
 #chatInputBox {
   display: flex;
 }
+
 #chatInputBox input {
   flex: 1;
   border: none;
@@ -270,6 +289,7 @@ canvas {
   background: #222;
   color: #fff;
 }
+
 #chatInputBox button {
   border: none;
   background: #3498db;
@@ -277,6 +297,7 @@ canvas {
   padding: 5px 10px;
   cursor: pointer;
 }
+
 #chatInputBox button:hover {
   background: #2980b9;
 }
