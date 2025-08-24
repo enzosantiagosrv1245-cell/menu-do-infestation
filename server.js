@@ -15,32 +15,27 @@ const USERS_FILE = path.join(__dirname, "users.json");
 const MESSAGES_FILE = path.join(__dirname, "messages.json");
 const LINKS_FILE = path.join(__dirname, "links.json");
 
+// --- Middleware ---
 app.use(express.static(__dirname));
 app.use(express.json());
 
-// --- Dados ---
-let users = fs.existsSync(USERS_FILE) ? fs.readJsonSync(USERS_FILE) : {};
-let messages = fs.existsSync(MESSAGES_FILE) ? fs.readJsonSync(MESSAGES_FILE) : {};
-let links = fs.existsSync(LINKS_FILE) ? fs.readJsonSync(LINKS_FILE) : [];
-
+// --- Dados na memória ---
+let users = {};
 let sockets = {}; // username -> socket.id
+let messages = {};
+let links = [];
 
-// --- Helpers ---
-function saveUsers() {
-  fs.writeJsonSync(USERS_FILE, users, { spaces: 2 });
-}
+// --- Carregar arquivos ---
+if (fs.existsSync(USERS_FILE)) users = fs.readJsonSync(USERS_FILE);
+if (fs.existsSync(MESSAGES_FILE)) messages = fs.readJsonSync(MESSAGES_FILE);
+if (fs.existsSync(LINKS_FILE)) links = fs.readJsonSync(LINKS_FILE);
 
-function saveMessages() {
-  fs.writeJsonSync(MESSAGES_FILE, messages, { spaces: 2 });
-}
+// --- Funções de salvamento ---
+function saveUsers() { fs.writeJsonSync(USERS_FILE, users, { spaces: 2 }); }
+function saveMessages() { fs.writeJsonSync(MESSAGES_FILE, messages, { spaces: 2 }); }
+function saveLinks() { fs.writeJsonSync(LINKS_FILE, links, { spaces: 2 }); }
 
-function saveLinks() {
-  fs.writeJsonSync(LINKS_FILE, links, { spaces: 2 });
-}
-
-function generateID() {
-  return "ID" + Math.floor(Math.random() * 1000000);
-}
+function generateID() { return "ID" + Math.floor(Math.random() * 1000000); }
 
 // --- Socket.IO ---
 io.on("connection", socket => {
@@ -49,17 +44,16 @@ io.on("connection", socket => {
   // --- Registro ---
   socket.on("register", ({ username, password }) => {
     if (users[username]) return socket.emit("registerError", "Usuário já existe!");
+    const id = generateID();
     users[username] = {
-      id: generateID(),
+      id,
       username,
       password,
       color: "#3498db",
       photo: null,
       editedName: false,
       friends: [],
-      requests: [],
-      links: [],
-      messages: {}
+      requests: []
     };
     saveUsers();
     socket.emit("registerSuccess", users[username]);
@@ -67,10 +61,13 @@ io.on("connection", socket => {
 
   // --- Login ---
   socket.on("login", ({ username, password }) => {
-    if (!users[username] || users[username].password !== password)
+    if (!users[username] || users[username].password !== password) 
       return socket.emit("loginError", "Usuário ou senha incorretos!");
     socket.username = username;
     sockets[username] = socket.id;
+
+    // Enviar histórico de mensagens para o usuário
+    if (!messages[username]) messages[username] = {};
     socket.emit("loginSuccess", users[username]);
   });
 
@@ -81,30 +78,23 @@ io.on("connection", socket => {
       saveLinks();
       socket.broadcast.emit("broadcastLink", url);
     }
-    if (!users[socket.username].links.includes(url)) {
-      users[socket.username].links.push(url);
-      saveUsers();
-    }
   });
 
-  // --- Verificar se usuário existe (amigos) ---
-  socket.on("checkUserExists", (username, callback) => {
-    callback(!!users[username]);
-  });
+  // --- Checar se usuário existe ---
+  socket.on("checkUserExists", (username, callback) => callback(!!users[username]));
 
   // --- Pedidos de amizade ---
-  socket.on("friendRequest", ({ from, to }) => {
+  socket.on("friendRequest", ({ from, to, photo }) => {
     if (!users[to]) return;
     if (!users[to].requests.includes(from) && !users[to].friends.includes(from)) {
       users[to].requests.push(from);
       saveUsers();
       if (sockets[to]) {
-        io.to(sockets[to]).emit("friendRequestNotification", { from, color: users[from].color, photo: users[from].photo });
+        io.to(sockets[to]).emit("friendRequestNotification", { from, color: users[from].color, photo });
       }
     }
   });
 
-  // --- Aceitar pedido ---
   socket.on("acceptRequest", ({ from, to }) => {
     if (!users[to] || !users[from]) return;
     if (!users[to].friends.includes(from)) users[to].friends.push(from);
@@ -115,7 +105,6 @@ io.on("connection", socket => {
     if (sockets[to]) io.to(sockets[to]).emit("friendAccepted", { from });
   });
 
-  // --- Recusar pedido ---
   socket.on("rejectRequest", ({ from, to }) => {
     if (!users[to]) return;
     users[to].requests = users[to].requests.filter(r => r !== from);
@@ -125,15 +114,18 @@ io.on("connection", socket => {
   // --- Chat DM ---
   socket.on("dm", ({ to, msg }) => {
     if (!users[to]) return;
+
     // Salvar mensagem
-    if (!messages[to]) messages[to] = [];
-    if (!messages[socket.username]) messages[socket.username] = [];
-    const dataTo = { sender: socket.username, text: msg, timestamp: Date.now() };
-    const dataFrom = { sender: socket.username, text: msg, timestamp: Date.now() };
-    messages[to].push(dataTo);
-    messages[socket.username].push(dataFrom);
+    if (!messages[to]) messages[to] = {};
+    if (!messages[to][socket.username]) messages[to][socket.username] = [];
+    messages[to][socket.username].push({ sender: socket.username, msg, timestamp: Date.now() });
+
+    if (!messages[socket.username]) messages[socket.username] = {};
+    if (!messages[socket.username][to]) messages[socket.username][to] = [];
+    messages[socket.username][to].push({ sender: socket.username, msg, timestamp: Date.now() });
+
     saveMessages();
-    // Enviar ao destinatário
+
     if (sockets[to]) io.to(sockets[to]).emit("dm", { from: socket.username, msg });
   });
 
@@ -142,12 +134,11 @@ io.on("connection", socket => {
     if (!users[oldName] || users[newName]) return;
     users[newName] = { ...users[oldName], username: newName, editedName: true };
     delete users[oldName];
-    if (sockets[oldName]) {
-      sockets[newName] = sockets[oldName];
-      delete sockets[oldName];
-    }
     saveUsers();
+
     if (sockets[newName]) io.to(sockets[newName]).emit("nameChanged", { newName });
+    if (sockets[oldName]) delete sockets[oldName];
+    sockets[newName] = socket.id;
   });
 
   socket.on("changePassword", ({ username, newPass }) => {

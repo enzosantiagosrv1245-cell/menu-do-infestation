@@ -14,9 +14,6 @@
   <!-- HUD -->
   <div class="hud">
     <button id="loginBtn">Login</button>
-    <button id="settingsBtn">Configurações</button>
-    <button id="friendsBtn">Amigos</button>
-    <button id="notificationsBtn">Notificações</button>
 
     <!-- Adicionar links -->
     <div class="link-box">
@@ -59,15 +56,6 @@
     </div>
   </div>
 
-  <!-- Notifications Modal -->
-  <div id="notificationsModal" class="generic-modal hidden">
-    <div class="modal-box">
-      <h2>Notificações</h2>
-      <div id="notificationsList"></div>
-      <button onclick="document.getElementById('notificationsModal').classList.add('hidden')">Fechar</button>
-    </div>
-  </div>
-
   <!-- Settings Modal -->
   <div id="settingsModal" class="generic-modal hidden">
     <div class="modal-box">
@@ -93,9 +81,6 @@
       <button onclick="document.getElementById('settingsModal').classList.add('hidden')">Fechar</button>
     </div>
   </div>
-
-  <!-- Notificações flutuantes -->
-  <div id="notificationsContainer" class="notifications"></div>
 
   <!-- Chat flutuante -->
   <div id="chatFloating" class="hidden">

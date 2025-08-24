@@ -20,8 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentUser = null;
   let userProfile = null;
   let linkQueue = [];
-  let currentChat = null;
-  let messagesCache = {}; // Armazena mensagens por usuário
 
   // --- HUD e links ---
   const linksContainer = document.getElementById("linksContainer");
@@ -93,15 +91,11 @@ document.addEventListener("DOMContentLoaded", () => {
   socket.on("loginSuccess", data => {
     currentUser = data.username;
     userProfile = data;
-    linkQueue = data.links || [];
-    messagesCache = data.messages || {};
     loginModal.classList.add("hidden");
     loginBtn.style.display = "none";
     createProfileUI();
     updateFriendsUI();
     showNotification("🎉 Login realizado!", "green");
-    document.getElementById("chatFloating").classList.remove("hidden");
-    renderLinks();
     renderChatFriends();
   });
   socket.on("loginError", msg => showNotification("❌ " + msg, "red"));
@@ -115,36 +109,71 @@ document.addEventListener("DOMContentLoaded", () => {
     if (userProfile.photo) {
       const img = document.createElement("img");
       img.src = userProfile.photo;
-      img.className = "profile-img";
       ball.appendChild(img);
     } else {
       ball.textContent = userProfile.username[0].toUpperCase();
       ball.style.backgroundColor = userProfile.color;
     }
     profileContainer.appendChild(ball);
+
     ball.onclick = () => {
-      document.getElementById("friendsModal").classList.remove("hidden");
-      updateFriendsUI();
+      showProfileMenu();
     };
   }
 
+  function showProfileMenu() {
+    const menu = document.createElement("div");
+    menu.className = "generic-modal";
+    menu.style.backgroundColor = "rgba(0,0,0,0.8)";
+    menu.style.display = "flex";
+    menu.style.flexDirection = "column";
+    menu.style.padding = "20px";
+    menu.style.borderRadius = "10px";
+    menu.style.position = "fixed";
+    menu.style.top = "70px";
+    menu.style.right = "20px";
+    menu.style.zIndex = "3000";
+
+    const friendsBtn = document.createElement("button");
+    friendsBtn.textContent = "Amigos";
+    friendsBtn.onclick = () => {
+      document.getElementById("friendsModal").classList.remove("hidden");
+      menu.remove();
+    };
+
+    const settingsBtn = document.createElement("button");
+    settingsBtn.textContent = "Configurações";
+    settingsBtn.onclick = () => {
+      document.getElementById("settingsModal").classList.remove("hidden");
+      menu.remove();
+    };
+
+    menu.appendChild(friendsBtn);
+    menu.appendChild(settingsBtn);
+
+    document.body.appendChild(menu);
+
+    // Remove menu se clicar fora
+    menu.addEventListener("click", e => {
+      if (e.target === menu) menu.remove();
+    });
+  }
+
   // --- Notificações ---
-  const notificationsList = document.getElementById("notificationsList");
   function showNotification(text, color = "yellow") {
-    const container = document.getElementById("notificationsContainer");
-    const div = document.createElement("div");
-    div.className = "notification";
-    div.style.backgroundColor = color;
-    div.innerHTML = `<b>${text}</b>`;
-    container.appendChild(div);
-    setTimeout(() => div.remove(), 4000);
+    const container = document.createElement("div");
+    container.className = "notification";
+    container.style.backgroundColor = color;
+    container.innerHTML = `<b>${text}</b>`;
+    document.body.appendChild(container);
+    setTimeout(() => container.remove(), 4000);
   }
 
   // --- Amigos ---
-  const friendsList = document.getElementById("friendsList");
-  const requestsList = document.getElementById("requestsList");
   const friendInput = document.getElementById("friendInput");
   const sendFriendRequestBtn = document.getElementById("sendFriendRequestBtn");
+  const friendsList = document.getElementById("friendsList");
+  const requestsList = document.getElementById("requestsList");
 
   sendFriendRequestBtn.addEventListener("click", () => {
     const target = friendInput.value.trim();
@@ -158,36 +187,16 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   socket.on("friendRequestNotification", ({ from, color, photo }) => {
-    const notif = document.createElement("div");
-    notif.className = "friend-request";
-    notif.innerHTML = `
-      ${photo ? `<img src="${photo}" class="profile-img-small">` 
-              : `<span class="profile-ball-small" style="background:${color}">${from[0].toUpperCase()}</span>`}
-      <span><b>${from}</b> quer ser seu amigo</span>
-    `;
-    const acceptBtn = document.createElement("button");
-    acceptBtn.textContent = "Aceitar";
-    acceptBtn.onclick = () => {
-      socket.emit("acceptRequest", { from, to: currentUser });
-      notif.remove();
-      updateFriendsUI();
-    };
-    const rejectBtn = document.createElement("button");
-    rejectBtn.textContent = "Recusar";
-    rejectBtn.onclick = () => {
-      socket.emit("rejectRequest", { from, to: currentUser });
-      notif.remove();
-    };
-    notif.appendChild(acceptBtn);
-    notif.appendChild(rejectBtn);
-    notificationsList.appendChild(notif);
+    userProfile.requests.push(from);
+    updateFriendsUI();
+    showNotification(`📩 Pedido de amizade de ${from}`, "blue");
   });
 
   socket.on("friendAccepted", ({ from }) => {
-    showNotification(`🤝 Você e ${from} agora são amigos!`, "green");
     if (!userProfile.friends.includes(from)) userProfile.friends.push(from);
     updateFriendsUI();
     renderChatFriends();
+    showNotification(`🤝 Você e ${from} agora são amigos!`, "green");
   });
 
   function updateFriendsUI() {
@@ -226,16 +235,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Chat flutuante ---
+  // --- Chat DM ---
   const chatFriendsContainer = document.getElementById("chatFriends");
   const chatMessagesFloating = document.getElementById("chatMessagesFloating");
   const chatInputFloating = document.getElementById("chatInputFloating");
   const sendChatFloating = document.getElementById("sendChatFloating");
+  let currentChat = null;
+  let chatHistory = {};
 
   function renderChatFriends() {
     chatFriendsContainer.innerHTML = "";
     userProfile.friends.forEach(f => {
-      const btn = document.createElement("button");
+      const btn = document.createElement("div");
       btn.className = "chat-friend-btn";
       btn.textContent = f;
       btn.onclick = () => openChat(f);
@@ -246,9 +257,9 @@ document.addEventListener("DOMContentLoaded", () => {
   function openChat(friend) {
     currentChat = friend;
     chatMessagesFloating.innerHTML = `<div class="chat-header">Chat com ${friend}</div>`;
-    if (messagesCache[friend]) {
-      messagesCache[friend].forEach(msg => appendMessage(msg.sender, msg.text));
-    }
+    if (!chatHistory[friend]) chatHistory[friend] = [];
+    chatHistory[friend].forEach(msg => appendMessage(msg.sender, msg.msg));
+    chatMessagesFloating.scrollTop = chatMessagesFloating.scrollHeight;
   }
 
   sendChatFloating.addEventListener("click", () => {
@@ -257,67 +268,23 @@ document.addEventListener("DOMContentLoaded", () => {
     socket.emit("dm", { to: currentChat, msg });
     appendMessage(currentUser, msg);
     chatInputFloating.value = "";
-    if (!messagesCache[currentChat]) messagesCache[currentChat] = [];
-    messagesCache[currentChat].push({ sender: currentUser, text: msg });
+    if (!chatHistory[currentChat]) chatHistory[currentChat] = [];
+    chatHistory[currentChat].push({ sender: currentUser, msg });
   });
 
   socket.on("dm", ({ from, msg }) => {
-    if (!messagesCache[from]) messagesCache[from] = [];
-    messagesCache[from].push({ sender: from, text: msg });
+    if (!chatHistory[from]) chatHistory[from] = [];
+    chatHistory[from].push({ sender: from, msg });
     if (from === currentChat) appendMessage(from, msg);
-    else showNotification(`💬 Nova mensagem de ${from}`, "#f39c12");
+    showNotification(`💬 Nova mensagem de ${from}`, "blue");
   });
 
   function appendMessage(sender, msg) {
     const div = document.createElement("div");
+    div.className = "chat-msg";
     div.innerHTML = `<b>${sender}:</b> ${msg}`;
     chatMessagesFloating.appendChild(div);
     chatMessagesFloating.scrollTop = chatMessagesFloating.scrollHeight;
   }
 
-  // --- Configurações ---
-  const changeNameBtn = document.getElementById("changeNameBtn");
-  const changeNameInput = document.getElementById("changeNameInput");
-  const changePassBtn = document.getElementById("changePassBtn");
-  const changePassInput = document.getElementById("changePassInput");
-  const newPassInput = document.getElementById("newPassInput");
-  const changeColorBtn = document.getElementById("changeColorBtn");
-  const changeColorInput = document.getElementById("changeColorInput");
-  const changePhotoBtn = document.getElementById("changePhotoBtn");
-  const changePhotoInput = document.getElementById("changePhotoInput");
-
-  changeNameBtn.addEventListener("click", () => {
-    const newName = changeNameInput.value.trim();
-    if (!newName) return;
-    socket.emit("changeName", { oldName: currentUser, newName });
-    currentUser = newName;
-    showNotification("✅ Nome alterado!", "green");
-  });
-
-  changePassBtn.addEventListener("click", () => {
-    const oldPass = changePassInput.value.trim();
-    const newPass = newPassInput.value.trim();
-    if (!oldPass || !newPass) return;
-    socket.emit("changePassword", { username: currentUser, newPass });
-    showNotification("✅ Senha alterada!", "green");
-  });
-
-  changeColorBtn.addEventListener("click", () => {
-    const color = changeColorInput.value;
-    socket.emit("changeColor", { username: currentUser, color });
-    userProfile.color = color;
-    createProfileUI();
-  });
-
-  changePhotoBtn.addEventListener("click", () => {
-    const file = changePhotoInput.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      socket.emit("changePhoto", { username: currentUser, photo: reader.result });
-      userProfile.photo = reader.result;
-      createProfileUI();
-    };
-    reader.readAsDataURL(file);
-  });
 });
