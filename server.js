@@ -10,31 +10,38 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-const DATA_DIR = path.join(__dirname, "data");
-fs.ensureDirSync(DATA_DIR);
+// --- Arquivos de dados ---
+const USERS_FILE = path.join(__dirname, "users.json");
+const MESSAGES_FILE = path.join(__dirname, "messages.json");
+const LINKS_FILE = path.join(__dirname, "links.json");
 
-const USERS_FILE = path.join(DATA_DIR, "users.json");
-const MESSAGES_FILE = path.join(DATA_DIR, "messages.json");
-const LINKS_FILE = path.join(DATA_DIR, "links.json");
-
+// --- Middleware ---
 app.use(express.static(__dirname));
 app.use(express.json());
 
-let users = fs.existsSync(USERS_FILE) ? fs.readJsonSync(USERS_FILE) : {};
-let messages = fs.existsSync(MESSAGES_FILE) ? fs.readJsonSync(MESSAGES_FILE) : {};
-let links = fs.existsSync(LINKS_FILE) ? fs.readJsonSync(LINKS_FILE) : [];
-
+// --- Dados na memória ---
+let users = {};
 let sockets = {}; // username -> socket.id
+let messages = {};
+let links = [];
 
+// --- Carregar arquivos ---
+if (fs.existsSync(USERS_FILE)) users = fs.readJsonSync(USERS_FILE);
+if (fs.existsSync(MESSAGES_FILE)) messages = fs.readJsonSync(MESSAGES_FILE);
+if (fs.existsSync(LINKS_FILE)) links = fs.readJsonSync(LINKS_FILE);
+
+// --- Funções de salvamento ---
 function saveUsers() { fs.writeJsonSync(USERS_FILE, users, { spaces: 2 }); }
 function saveMessages() { fs.writeJsonSync(MESSAGES_FILE, messages, { spaces: 2 }); }
 function saveLinks() { fs.writeJsonSync(LINKS_FILE, links, { spaces: 2 }); }
+
 function generateID() { return "ID" + Math.floor(Math.random() * 1000000); }
 
+// --- Socket.IO ---
 io.on("connection", socket => {
   console.log("Novo jogador conectado:", socket.id);
 
-  // Registro
+  // --- Registro ---
   socket.on("register", ({ username, password }) => {
     if (users[username]) return socket.emit("registerError", "Usuário já existe!");
     const id = generateID();
@@ -52,43 +59,42 @@ io.on("connection", socket => {
     socket.emit("registerSuccess", users[username]);
   });
 
-  // Login
+  // --- Login ---
   socket.on("login", ({ username, password }) => {
-    if (!users[username] || users[username].password !== password) return socket.emit("loginError", "Usuário ou senha incorretos!");
+    if (!users[username] || users[username].password !== password) 
+      return socket.emit("loginError", "Usuário ou senha incorretos!");
     socket.username = username;
     sockets[username] = socket.id;
 
-    // Envia mensagens pendentes
-    if (!messages[username]) messages[username] = [];
-    socket.emit("loadMessages", messages[username]);
+    // Enviar histórico de mensagens para o usuário
+    if (!messages[username]) messages[username] = {};
     socket.emit("loginSuccess", users[username]);
   });
 
-  // Links
+  // --- Links ---
   socket.on("newLink", url => {
-    links.push(url);
-    saveLinks();
-    socket.broadcast.emit("broadcastLink", url);
+    if (!links.includes(url)) {
+      links.push(url);
+      saveLinks();
+      socket.broadcast.emit("broadcastLink", url);
+    }
   });
 
-  // Checar usuário
-  socket.on("checkUserExists", (username, callback) => {
-    callback(!!users[username]);
-  });
+  // --- Checar se usuário existe ---
+  socket.on("checkUserExists", (username, callback) => callback(!!users[username]));
 
-  // Pedidos de amizade
-  socket.on("friendRequest", ({ from, to }) => {
+  // --- Pedidos de amizade ---
+  socket.on("friendRequest", ({ from, to, photo }) => {
     if (!users[to]) return;
     if (!users[to].requests.includes(from) && !users[to].friends.includes(from)) {
       users[to].requests.push(from);
       saveUsers();
       if (sockets[to]) {
-        io.to(sockets[to]).emit("friendRequestNotification", { from, color: users[from].color });
+        io.to(sockets[to]).emit("friendRequestNotification", { from, color: users[from].color, photo });
       }
     }
   });
 
-  // Aceitar pedido
   socket.on("acceptRequest", ({ from, to }) => {
     if (!users[to] || !users[from]) return;
     if (!users[to].friends.includes(from)) users[to].friends.push(from);
@@ -99,31 +105,37 @@ io.on("connection", socket => {
     if (sockets[to]) io.to(sockets[to]).emit("friendAccepted", { from });
   });
 
-  // Recusar pedido
   socket.on("rejectRequest", ({ from, to }) => {
     if (!users[to]) return;
     users[to].requests = users[to].requests.filter(r => r !== from);
     saveUsers();
   });
 
-  // Chat DM
+  // --- Chat DM ---
   socket.on("dm", ({ to, msg }) => {
-    if (!sockets[to]) {
-      // Salva mensagem para envio posterior
-      if (!messages[to]) messages[to] = [];
-      messages[to].push({ from: socket.username, msg });
-      saveMessages();
-      return;
-    }
-    io.to(sockets[to]).emit("dm", { from: socket.username, msg });
+    if (!users[to]) return;
+
+    // Salvar mensagem
+    if (!messages[to]) messages[to] = {};
+    if (!messages[to][socket.username]) messages[to][socket.username] = [];
+    messages[to][socket.username].push({ sender: socket.username, msg, timestamp: Date.now() });
+
+    if (!messages[socket.username]) messages[socket.username] = {};
+    if (!messages[socket.username][to]) messages[socket.username][to] = [];
+    messages[socket.username][to].push({ sender: socket.username, msg, timestamp: Date.now() });
+
+    saveMessages();
+
+    if (sockets[to]) io.to(sockets[to]).emit("dm", { from: socket.username, msg });
   });
 
-  // Configurações
+  // --- Configurações ---
   socket.on("changeName", ({ oldName, newName }) => {
     if (!users[oldName] || users[newName]) return;
     users[newName] = { ...users[oldName], username: newName, editedName: true };
     delete users[oldName];
     saveUsers();
+
     if (sockets[newName]) io.to(sockets[newName]).emit("nameChanged", { newName });
     if (sockets[oldName]) delete sockets[oldName];
     sockets[newName] = socket.id;
@@ -148,10 +160,12 @@ io.on("connection", socket => {
     saveUsers();
   });
 
+  // --- Desconexão ---
   socket.on("disconnect", () => {
     if (socket.username) delete sockets[socket.username];
     console.log("Desconectado:", socket.id);
   });
 });
 
+// --- Servidor ---
 server.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

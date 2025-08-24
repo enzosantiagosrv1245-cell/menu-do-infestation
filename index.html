@@ -8,7 +8,7 @@
 </head>
 <body>
 
-  <!-- Canvas do jogo com fundo animado -->
+  <!-- Canvas do jogo -->
   <canvas id="gameCanvas" width="800" height="600"></canvas>
 
   <!-- HUD -->
@@ -82,11 +82,8 @@
     </div>
   </div>
 
-  <!-- Notificações flutuantes -->
-  <div id="notificationsContainer" class="notifications"></div>
-
   <!-- Chat flutuante -->
-  <div id="chatFloating">
+  <div id="chatFloating" class="hidden">
     <div id="chatHeader">Chat</div>
     <div id="chatFriends"></div>
     <div id="chatMessagesFloating"></div>
@@ -96,7 +93,7 @@
     </div>
   </div>
 
-  <!-- Socket.io -->
+  <!-- Sockets -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
 </body>
