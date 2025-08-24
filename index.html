@@ -11,7 +11,7 @@
   <!-- Canvas do jogo -->
   <canvas id="gameCanvas" width="800" height="600"></canvas>
 
-  <!-- HUD principal -->
+  <!-- HUD -->
   <div class="hud">
     <button id="loginBtn">Login</button>
     <button id="settingsBtn">Configurações</button>
@@ -31,7 +31,7 @@
   <!-- Bolinha/foto de perfil -->
   <div id="profileBallContainer"></div>
 
-  <!-- Modal de Login / Registro -->
+  <!-- Login Modal -->
   <div id="loginModal" class="modal hidden">
     <div class="modal-content">
       <h2>Login / Registro</h2>
@@ -45,7 +45,7 @@
     </div>
   </div>
 
-  <!-- Modal Amigos -->
+  <!-- Friends Modal -->
   <div id="friendsModal" class="generic-modal hidden">
     <div class="modal-box">
       <h2>Amigos</h2>
@@ -59,7 +59,7 @@
     </div>
   </div>
 
-  <!-- Modal Notificações -->
+  <!-- Notifications Modal -->
   <div id="notificationsModal" class="generic-modal hidden">
     <div class="modal-box">
       <h2>Notificações</h2>
@@ -68,28 +68,24 @@
     </div>
   </div>
 
-  <!-- Modal Configurações -->
+  <!-- Settings Modal -->
   <div id="settingsModal" class="generic-modal hidden">
     <div class="modal-box">
       <h2>Configurações</h2>
 
-      <!-- Alterar Nome -->
       <h3>Mudar Nome</h3>
       <input type="text" id="changeNameInput" placeholder="Novo nome">
       <button id="changeNameBtn">Alterar Nome</button>
 
-      <!-- Alterar Senha -->
       <h3>Mudar Senha</h3>
       <input type="password" id="changePassInput" placeholder="Senha atual">
       <input type="password" id="newPassInput" placeholder="Nova senha">
       <button id="changePassBtn">Alterar Senha</button>
 
-      <!-- Alterar Cor do Perfil -->
       <h3>Mudar Cor do Perfil</h3>
       <input type="color" id="changeColorInput">
       <button id="changeColorBtn">Alterar Cor</button>
 
-      <!-- Alterar Foto do Perfil -->
       <h3>Mudar Foto do Perfil</h3>
       <input type="file" id="changePhotoInput" accept="image/*">
       <button id="changePhotoBtn">Alterar Foto</button>
@@ -98,7 +94,7 @@
     </div>
   </div>
 
-  <!-- Container de notificações flutuantes -->
+  <!-- Notificações flutuantes -->
   <div id="notificationsContainer" class="notifications"></div>
 
   <!-- Chat flutuante -->
@@ -112,7 +108,7 @@
     </div>
   </div>
 
-  <!-- Scripts -->
+  <!-- Sockets -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
 </body>
