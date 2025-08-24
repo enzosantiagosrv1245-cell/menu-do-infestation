@@ -14,6 +14,8 @@
   <!-- HUD -->
   <div class="hud">
     <button id="loginBtn">Login</button>
+    <button id="settingsBtn">Configurações</button>
+    <button id="friendsBtn">Amigos</button>
 
     <!-- Adicionar links -->
     <div class="link-box">
@@ -82,11 +84,14 @@
     </div>
   </div>
 
+  <!-- Notificações flutuantes -->
+  <div id="notificationsContainer" class="notifications"></div>
+
   <!-- Chat flutuante -->
   <div id="chatFloating" class="hidden">
     <div id="chatHeader">Chat</div>
     <div id="chatFriends"></div>
-    <div id="chatMessagesFloating"></div>
+    <div id="chatMessagesFloating" style="max-height: 200px; overflow-y:auto;"></div>
     <div id="chatInputBox">
       <input type="text" id="chatInputFloating" placeholder="Digite uma mensagem...">
       <button id="sendChatFloating">Enviar</button>
